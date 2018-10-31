@@ -15,6 +15,9 @@ go get github.com/juicedata/juicesync
 $HOME/go/bin/juicesync
 ```
 
+We assume your GOPATH is `$HOME/go`. How to set GOPATH? Please visit [The
+official document](https://github.com/golang/go/wiki/SettingGOPATH)
+
 # Usage
 
 ```
