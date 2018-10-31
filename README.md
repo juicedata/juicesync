@@ -57,7 +57,7 @@ NAME://[ACCESS_KEY:SECRET_KEY]@BUCKET.ENDPOINT[/PREFIX]
 
 Some examples:
 
-- file://Users/me/code/
+- file:///Users/me/code/
 - s3://my-bucket.us-east1.amazonaws.com/
 - s3://access-key:secret-key-id@my-bucket.us-west2.s3.amazonaws.com/prefix
 - gcs://my-bucket.us-west1.googleapi.com/
