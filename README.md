@@ -23,6 +23,16 @@ official document](https://github.com/golang/go/wiki/SettingGOPATH)
 ```
 juicesync [options] SRC DST
 ```
+Options:
+  -end string
+    	the last keys to sync
+  -p int
+    	number of concurrent threads (default 50)
+  -q	change log level to ERROR
+  -start string
+    	the start of keys to sync
+  -v	turn on debug log
+  --help show the usage
 
 SRC and DST must be an URI of the following object storage:
 
