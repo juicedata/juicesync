@@ -53,7 +53,7 @@ SRC and DST must be an URI of the following object storage:
 
 SRC and DST should be in the following format:
 
-NAME://[ACCESS_KEY:SECRET_KEY]@BUCKET.ENDPOINT[/PREFIX]
+NAME://[ACCESS_KEY:SECRET_KEY@]BUCKET.ENDPOINT[/PREFIX]
 
 Some examples:
 
