@@ -258,6 +258,7 @@ func (d *filestore) CompleteUpload(key string, uploadID string, parts []*Part) e
 			return e
 		}
 	}
+	os.RemoveAll(filepath.Dir(parts[0].ETag)) // delete temporary tiles
 	return nil
 }
 
