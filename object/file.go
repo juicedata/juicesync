@@ -258,6 +258,16 @@ func (d *filestore) CompleteUpload(key string, uploadID string, parts []*Part) e
 			return e
 		}
 	}
+	if len(parts) > 0 {
+		if strings.Contains(filepath.Dir(parts[0].ETag), "/tmp/multipart"){
+			e := os.RemoveAll(filepath.Dir(parts[0].ETag)) //delete temporary file
+		    	if e != nil {
+			    return e
+		    	}
+		}else {
+			logger.Fatal("bad path")
+		}
+	}
 	return nil
 }
 
