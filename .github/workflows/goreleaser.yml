@@ -6,6 +6,7 @@ on:
       - master
       - goreleaser
     tags:
+      - v*
 
 jobs:
   goreleaser:
