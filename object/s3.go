@@ -209,9 +209,9 @@ func newS3(endpoint, accessKey, secretKey string) ObjectStorage {
 		logger.Fatalf("Invalid endpoint %s: %s", endpoint, err.Error())
 	}
 	ssl := strings.ToLower(uri.Scheme) == "https"
-	hostParts := strings.SplitN(uri.Host, ".", 2)
+	hostParts := strings.SplitN(uri.Host, ".s3", 2)
 	bucket := hostParts[0]
-	endpoint = hostParts[1]
+	endpoint = "s3" + hostParts[1]
 	if strings.HasPrefix(endpoint, "s3-") || strings.HasPrefix(endpoint, "s3.") {
 		endpoint = endpoint[3:]
 	}
