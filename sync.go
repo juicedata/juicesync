@@ -50,8 +50,7 @@ func Iterate(store object.ObjectStorage, marker, end string) (<-chan *object.Obj
 		for len(objs) > 0 {
 			for _, obj := range objs {
 				key := obj.Key
-				if obj.Size == 0 && (strings.HasSuffix(key, "/") || strings.HasSuffix(key, "$")) {
-					logger.Debugf("skip directory marker: %s", key)
+				if obj.Size == 0 || strings.HasSuffix(key, "/") {
 					continue
 				}
 				if key <= lastkey {
