@@ -17,6 +17,10 @@ import (
 	"github.com/juicedata/juicesync/utils"
 )
 
+const (
+	dirSuffix = "/"
+)
+
 type filestore struct {
 	dir        string
 	lastListed string
@@ -37,6 +41,16 @@ func (d *filestore) path(key string) string {
 
 func (d *filestore) Get(key string, off, limit int64) (io.ReadCloser, error) {
 	p := d.path(key)
+	fi, err := os.Stat(p)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if fi.IsDir() {
+		return ioutil.NopCloser(new(bytes.Buffer)), nil
+	}
+
 	f, err := os.Open(p)
 	if err != nil {
 		return nil, err
@@ -60,6 +74,11 @@ func (d *filestore) Get(key string, off, limit int64) (io.ReadCloser, error) {
 
 func (d *filestore) Put(key string, in io.Reader) error {
 	p := d.path(key)
+
+	if key[len(key)-1:] == dirSuffix {
+		return os.MkdirAll(p, os.FileMode(0700))
+	}
+
 	if err := os.MkdirAll(filepath.Dir(p), os.FileMode(0700)); err != nil {
 		return err
 	}
@@ -171,7 +190,7 @@ func readDirNames(dirname string) ([]string, error) {
 	names := make([]string, len(fi))
 	for i := range fi {
 		if fi[i].IsDir() || isSymlinkAndDir(filepath.Join(dirname, fi[i].Name())) {
-			names[i] = fi[i].Name() + "/"
+			names[i] = fi[i].Name() + dirSuffix
 		} else {
 			names[i] = fi[i].Name()
 		}
@@ -189,7 +208,7 @@ func (d *filestore) List(prefix, marker string, limit int64) ([]*Object, error) 
 					return err
 				}
 				key := path[len(d.dir):]
-				if key >= marker && strings.HasPrefix(key, prefix) && !info.IsDir() && info.Size() > 0 {
+				if key >= marker && strings.HasPrefix(key, prefix) && !info.IsDir() {
 					t := int(info.ModTime().Unix())
 					listed <- &Object{key, info.Size(), t, t}
 				}
@@ -273,8 +292,8 @@ func (d *filestore) ListUploads(marker string) ([]*PendingPart, string, error) {
 }
 
 func newDisk(endpoint, accesskey, secretkey string) ObjectStorage {
-	if !strings.HasSuffix(endpoint, "/") {
-		endpoint += "/"
+	if !strings.HasSuffix(endpoint, dirSuffix) {
+		endpoint += dirSuffix
 	}
 	store := &filestore{dir: endpoint}
 	return store
