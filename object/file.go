@@ -41,16 +41,6 @@ func (d *filestore) path(key string) string {
 
 func (d *filestore) Get(key string, off, limit int64) (io.ReadCloser, error) {
 	p := d.path(key)
-	fi, err := os.Stat(p)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if fi.IsDir() {
-		return ioutil.NopCloser(new(bytes.Buffer)), nil
-	}
-
 	f, err := os.Open(p)
 	if err != nil {
 		return nil, err
@@ -75,7 +65,7 @@ func (d *filestore) Get(key string, off, limit int64) (io.ReadCloser, error) {
 func (d *filestore) Put(key string, in io.Reader) error {
 	p := d.path(key)
 
-	if key[len(key)-1:] == dirSuffix {
+	if strings.HasSuffix(key, dirSuffix) {
 		return os.MkdirAll(p, os.FileMode(0700))
 	}
 

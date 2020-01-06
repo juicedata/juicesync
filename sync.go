@@ -242,7 +242,9 @@ func doSync(src, dst object.ObjectStorage, srckeys, dstkeys <-chan *object.Objec
 							logger.Debugf("Will delete %s from %s", obj.Key, src)
 							continue
 						}
-						if err = src.Delete(obj.Key); err == nil {
+						if err = try(3, func() error {
+							return src.Delete(obj.Key)
+						}); err == nil {
 							logger.Debugf("Deleted %s from %s", obj.Key, src)
 							atomic.AddUint64(&deleted, 1)
 						} else {
@@ -255,7 +257,9 @@ func doSync(src, dst object.ObjectStorage, srckeys, dstkeys <-chan *object.Objec
 							logger.Debugf("Will delete %s from %s", obj.Key, dst)
 							continue
 						}
-						if err = dst.Delete(obj.Key); err == nil {
+						if err = try(3, func() error {
+							return dst.Delete(obj.Key)
+						}); err == nil {
 							logger.Debugf("Deleted %s from %s", obj.Key, dst)
 							atomic.AddUint64(&deleted, 1)
 						} else {
