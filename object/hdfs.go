@@ -49,23 +49,31 @@ func (h *hdfsclient) Get(key string, off, limit int64) (io.ReadCloser, error) {
 }
 
 func (h *hdfsclient) Put(key string, in io.Reader) error {
-	f, err := h.c.CreateFile("/"+key, 3, 128<<20, 0755)
+	path := "/" + key
+	f, err := h.c.CreateFile(path, 3, 128<<20, 0755)
 	if err != nil {
 		if pe, ok := err.(*os.PathError); ok && pe.Err == os.ErrNotExist {
-			h.c.MkdirAll(filepath.Dir("/"+key), 0755)
-			f, err = h.c.CreateFile("/"+key, 3, 128<<20, 0755)
+			h.c.MkdirAll(filepath.Dir(path), 0755)
+			f, err = h.c.CreateFile(path, 3, 128<<20, 0755)
 		}
-		return err
+		if pe, ok := err.(*os.PathError); ok && pe.Err == os.ErrExist {
+			h.c.Remove(path)
+			f, err = h.c.CreateFile(path, 3, 128<<20, 0755)
+		}
+		if err != nil {
+			return err
+		}
 	}
+	f.Write(nil)
 	_, err = io.Copy(f, in)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		f.Close()
-		h.c.Remove("/" + key)
+		h.c.Remove(path)
 		return err
 	}
 	err = f.Close()
 	if err != nil {
-		h.c.Remove("/" + key)
+		h.c.Remove(path)
 	}
 	return err
 }
@@ -76,7 +84,7 @@ func (h *hdfsclient) Exists(key string) error {
 }
 
 func (h *hdfsclient) Delete(key string) error {
-	return h.c.Remove(key)
+	return h.c.Remove("/" + key)
 }
 
 func (h *hdfsclient) List(prefix, marker string, limit int64) ([]*Object, error) {
@@ -85,7 +93,7 @@ func (h *hdfsclient) List(prefix, marker string, limit int64) ([]*Object, error)
 		go func() {
 			root := "/" + prefix
 			_, err := h.c.Stat(root)
-			if err.(*os.PathError).Err == os.ErrNotExist {
+			if err != nil && err.(*os.PathError).Err == os.ErrNotExist {
 				root = filepath.Dir(root)
 			}
 			prefix = "/" + prefix
@@ -135,8 +143,8 @@ func (h *hdfsclient) List(prefix, marker string, limit int64) ([]*Object, error)
 
 // TODO: multipart upload
 
-func newHDFS(addr, ak, sk string) ObjectStorage {
-	c, err := hdfs.New(addr)
+func newHDFS(addr, user, sk string) ObjectStorage {
+	c, err := hdfs.NewForUser(addr, user)
 	if err != nil {
 		logger.Fatalf("new HDFS client %s: %s", addr, err)
 	}
