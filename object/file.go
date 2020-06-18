@@ -31,17 +31,6 @@ func (d *filestore) String() string {
 	return "file://" + d.root
 }
 
-func (d *filestore) Create() error {
-	fi, err := os.Stat(d.root)
-	if err == nil && !fi.IsDir() {
-		return nil
-	}
-	if !strings.HasSuffix(d.root, dirSuffix) {
-		d.root += dirSuffix
-	}
-	return os.MkdirAll(d.root, os.FileMode(0700))
-}
-
 func (d *filestore) path(key string) string {
 	return filepath.Join(d.root, key)
 }
@@ -236,9 +225,8 @@ func (d *filestore) List(prefix, marker string, limit int64) ([]*Object, error) 
 	return objs, nil
 }
 
-func newDisk(endpoint, accesskey, secretkey string) ObjectStorage {
-	store := &filestore{root: endpoint}
-	return store
+func newDisk(root, accesskey, secretkey string) ObjectStorage {
+	return &filestore{root: root}
 }
 
 func init() {
