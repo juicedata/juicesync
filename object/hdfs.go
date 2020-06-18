@@ -98,6 +98,9 @@ func (h *hdfsclient) List(prefix, marker string, limit int64) ([]*Object, error)
 			}
 			prefix = "/" + prefix
 			h.listerr = h.c.Walk(root, func(path string, info os.FileInfo, err error) error {
+				if info == nil {
+					return nil // workaround
+				}
 				if err != nil {
 					return err
 				}
@@ -113,7 +116,7 @@ func (h *hdfsclient) List(prefix, marker string, limit int64) ([]*Object, error)
 				}
 				if !info.IsDir() {
 					t := int(info.ModTime().Unix())
-					listed <- &Object{path, info.Size(), t, t}
+					listed <- &Object{key, info.Size(), t, t}
 				}
 				return nil
 			})
