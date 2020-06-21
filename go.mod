@@ -23,7 +23,8 @@ require (
 	github.com/onsi/ginkgo v1.13.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/sftp v1.10.0
-	github.com/qiniu/api.v7 v7.1.0+incompatible
+	github.com/qiniu/api.v7 v7.1.0+incompatible // indirect
+	github.com/qiniu/api.v7/v7 v7.5.0
 	github.com/qiniu/x v7.0.8+incompatible // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/satori/uuid v1.1.0 // indirect
@@ -39,7 +40,6 @@ require (
 	google.golang.org/api v0.5.0
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
-	qiniupkg.com/x v7.0.7+incompatible // indirect
 )
 
 go 1.13
