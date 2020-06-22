@@ -194,10 +194,7 @@ func (d *filestore) List(prefix, marker string, limit int64) ([]*Object, error) 
 				if err != nil {
 					return err
 				}
-				key, err := filepath.Rel(d.root, path)
-				if err != nil {
-					return err
-				}
+				key := path[len(d.root):]
 				if key >= marker && strings.HasPrefix(key, prefix) && !info.IsDir() {
 					t := int(info.ModTime().Unix())
 					listed <- &Object{key, info.Size(), t, t}

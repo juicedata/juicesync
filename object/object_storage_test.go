@@ -161,7 +161,7 @@ func TestMem(t *testing.T) {
 }
 
 func TestDisk(t *testing.T) {
-	s := newDisk("/tmp/abc", "", "")
+	s := newDisk("/tmp/abc/", "", "")
 	testStorage(t, s)
 }
 
