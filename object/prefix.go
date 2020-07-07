@@ -5,6 +5,7 @@ package object
 import (
 	"fmt"
 	"io"
+	"os"
 	"time"
 )
 
@@ -77,6 +78,20 @@ func (p *withPrefix) Chtimes(path string, mtime time.Time) error {
 		return mc.Chtimes(p.prefix+path, mtime)
 	}
 	return nil
+}
+
+func (p *withPrefix) Chmod(path string, mode os.FileMode) error {
+	if fs, ok := p.os.(FileSystem); ok {
+		return fs.Chmod(p.prefix+path, mode)
+	}
+	return notSupported
+}
+
+func (p *withPrefix) Chown(path string, owner, group string) error {
+	if fs, ok := p.os.(FileSystem); ok {
+		return fs.Chown(p.prefix+path, owner, group)
+	}
+	return notSupported
 }
 
 func (p *withPrefix) CreateMultipartUpload(key string) (*MultipartUpload, error) {
