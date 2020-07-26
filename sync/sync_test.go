@@ -38,7 +38,7 @@ func TestIterator(t *testing.T) {
 
 	// Single object
 	s := object.CreateStorage("mem", "", "", "")
-	s.Put("a", bytes.NewReader([]byte("a")))
+	s.Put("", bytes.NewReader([]byte("a")))
 	ch, _ = iterate(s, "", "")
 	keys = collectAll(ch)
 	if !reflect.DeepEqual(keys, []string{"a"}) {
