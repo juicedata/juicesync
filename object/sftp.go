@@ -160,6 +160,14 @@ func (f *sftpStore) Get(key string, off, limit int64) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
+	finfo, err := ff.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if finfo.IsDir() {
+		return ioutil.NopCloser(bytes.NewBuffer([]byte{})), nil
+	}
+
 	if off > 0 {
 		if _, err := ff.Seek(off, 0); err != nil {
 			ff.Close()
@@ -269,9 +277,9 @@ func (f *sftpStore) find(c *sftp.Client, path, marker string, out chan *Object) 
 		key := p[len(f.root):]
 		if key >= marker {
 			if fi.IsDir() {
-				out <- &Object{key + "/", 0, fi.ModTime()}
+				out <- &Object{key + "/", 0, fi.ModTime(), true}
 			} else if fi.Size() > 0 {
-				out <- &Object{key, fi.Size(), fi.ModTime()}
+				out <- &Object{key, fi.Size(), fi.ModTime(), false}
 			}
 		}
 		if fi.IsDir() && (key >= marker || strings.HasPrefix(marker, key)) {

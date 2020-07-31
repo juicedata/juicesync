@@ -37,14 +37,19 @@ func (d *filestore) path(key string) string {
 func (d *filestore) Get(key string, off, limit int64) (io.ReadCloser, error) {
 	p := d.path(key)
 
-	if strings.HasSuffix(key, dirSuffix) || key == "" && strings.HasSuffix(d.root, dirSuffix) {
-		return ioutil.NopCloser(bytes.NewBuffer([]byte{})), nil
-	}
-
 	f, err := os.Open(p)
 	if err != nil {
 		return nil, err
 	}
+
+	finfo, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if finfo.IsDir() {
+		return ioutil.NopCloser(bytes.NewBuffer([]byte{})), nil
+	}
+
 	if off > 0 {
 		if _, err := f.Seek(off, 0); err != nil {
 			f.Close()
@@ -220,7 +225,7 @@ func (d *filestore) ListAll(prefix, marker string) (<-chan *Object, error) {
 				return nil
 			}
 			owner, group := getOwnerGroup(info)
-			f := &File{Object{key, info.Size(), info.ModTime()}, owner, group, info.Mode()}
+			f := &File{Object{key, info.Size(), info.ModTime(), info.IsDir()}, owner, group, info.Mode()}
 			if info.IsDir() {
 				f.Size = 0
 				if f.Key != "" || !strings.HasSuffix(d.root, "/") {
