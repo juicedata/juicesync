@@ -262,15 +262,13 @@ func (s sortFI) Less(i, j int) bool {
 	return name1 < name2
 }
 
-func (f *sftpStore) find(c *sftp.Client, path, marker string, out chan *Object) {
-	if path == "" {
-		path = "."
-	}
+func (f *sftpStore) doFind(c *sftp.Client, path, marker string, out chan *Object) {
 	infos, err := c.ReadDir(path)
 	if err != nil {
 		logger.Errorf("readdir %s: %s", path, err)
 		return
 	}
+
 	sort.Sort(sortFI(infos))
 	for _, fi := range infos {
 		p := path + "/" + fi.Name()
@@ -278,13 +276,37 @@ func (f *sftpStore) find(c *sftp.Client, path, marker string, out chan *Object) 
 		if key >= marker {
 			if fi.IsDir() {
 				out <- &Object{key + "/", 0, fi.ModTime(), true}
-			} else if fi.Size() > 0 {
+			} else {
 				out <- &Object{key, fi.Size(), fi.ModTime(), false}
 			}
 		}
 		if fi.IsDir() && (key >= marker || strings.HasPrefix(marker, key)) {
-			f.find(c, p, marker, out)
+			f.doFind(c, p, marker, out)
 		}
+	}
+}
+
+func (f *sftpStore) find(c *sftp.Client, path, marker string, out chan *Object) {
+	if path == "" {
+		path = "."
+	}
+
+	if marker != "" {
+		f.doFind(c, path, marker, out)
+		return
+	}
+
+	// try the file with file path `path` as an object
+	fi, err := c.Stat(path)
+	if err != nil {
+		logger.Errorf("Stat %s error: %s", path, err)
+		return
+	}
+	if fi.IsDir() {
+		out <- &Object{"", 0, fi.ModTime(), true}
+		f.doFind(c, path, marker, out)
+	} else {
+		out <- &Object{"", fi.Size(), fi.ModTime(), false}
 	}
 }
 
