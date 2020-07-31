@@ -36,6 +36,11 @@ func (d *filestore) path(key string) string {
 
 func (d *filestore) Get(key string, off, limit int64) (io.ReadCloser, error) {
 	p := d.path(key)
+
+	if strings.HasSuffix(key, dirSuffix) || key == "" && strings.HasSuffix(d.root, dirSuffix) {
+		return ioutil.NopCloser(bytes.NewBuffer([]byte{})), nil
+	}
+
 	f, err := os.Open(p)
 	if err != nil {
 		return nil, err
