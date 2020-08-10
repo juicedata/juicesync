@@ -62,9 +62,6 @@ func iterate(store object.ObjectStorage, start, end string) (<-chan *object.Obje
 		if end == "" {
 			go func() {
 				for obj := range ch {
-					if obj == nil {
-						break
-					}
 					out <- obj
 				}
 				close(out)
@@ -74,7 +71,7 @@ func iterate(store object.ObjectStorage, start, end string) (<-chan *object.Obje
 
 		go func() {
 			for obj := range ch {
-				if obj == nil || obj.Key > end {
+				if obj != nil && obj.Key > end {
 					break
 				}
 				out <- obj
