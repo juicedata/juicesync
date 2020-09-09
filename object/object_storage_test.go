@@ -118,7 +118,7 @@ func testStorage(t *testing.T, s ObjectStorage) {
 
 	if err := s.Delete("/test"); err == nil {
 		// COS Fail
-		// t.Fatalf("delete non exists: %v", err)
+		t.Fatalf("delete non exists: %v", err)
 	}
 
 	if uploader, err := s.CreateMultipartUpload(k); err == nil {
@@ -196,10 +196,7 @@ func TestS3(t *testing.T) {
 	if os.Getenv("AWS_ACCESS_KEY_ID") == "" {
 		t.SkipNow()
 	}
-	s := newS3("https://cfs-test-tmp1.s3-us-west-2.amazonaws.com",
-		os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"))
-	testStorage(t, s)
-	s = newS3("https://jfs-test-tmp.s3.cn-north-1.amazonaws.com.cn",
+	s := newS3(fmt.Sprintf("https://%s", os.Getenv("AWS_TEST_BUCKET")),
 		os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"))
 	testStorage(t, s)
 }
