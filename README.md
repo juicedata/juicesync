@@ -118,13 +118,18 @@ Some examples:
 Note:
 
 - It's recommended to run juicesync in the target region to have better performance.
-- S3: The access key and secret key for S3 could be provided by AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or IAM role.
-- COS: The AppID should be part of the bucket name.
+- S3: 
+  * The access key and secret key for S3 could be provided by `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, or *IAM* role.
+  * The command line argument support `s3://[ACCESS_KEY:SECRET_KEY@]BUCKET[/PREFIX]` . As the credential might not be valid globally, the default region( `us-east-1` ) can be changed by `AWS_DEFAULT_REGION` environment variable.
+- COS: 
+  * The AppID should be part of the bucket name.
+  * The credential can be provided by environment variable `COS_SECRETID` and `COS_SECRETKEY`.
+  * The command line argument support `cos://[ACCESS_KEY:SECRET_KEY@]BUCKET[/PREFIX]`.
 - GCS: The machine should be authorized to access Google Cloud Storage.
 - OSS:
-  The credential can be provided by environment variable `ALICLOUD_ACCESS_KEY_ID` and `ALICLOUD_ACCESS_KEY_SECRET` , RAM role, [EMR MetaService](https://help.aliyun.com/document_detail/43966.html).
-  The command line argument support `oss://[ACCESS_KEY:SECRET_KEY@]BUCKET[/PREFIX]` , the credential must have `oss:ListBuckets` permission.
+  * The credential can be provided by environment variable `ALICLOUD_ACCESS_KEY_ID` and `ALICLOUD_ACCESS_KEY_SECRET` , RAM role, [EMR MetaService](https://help.aliyun.com/document_detail/43966.html).
+  * The command line argument support `oss://[ACCESS_KEY:SECRET_KEY@]BUCKET[/PREFIX]` , the credential must have `oss:ListBuckets` permission.
 - Qiniu:
   The S3 endpoint should be used for Qiniu, for example, abc.cn-north-1-s3.qiniu.com.
-  If there are keys starting with "/", the domain should be provided as QINIU_DOMAIN.
+  If there are keys starting with "/", the domain should be provided as `QINIU_DOMAIN`.
 - sftp: if your target machine uses SSH certificates instead of password, you should pass the path to your private key file to the environment variable `SSH_PRIVATE_KEY_PATH`, like ` SSH_PRIVATE_KEY_PATH=/home/someuser/.ssh/id_rsa juicesync [src] [dst]`.
