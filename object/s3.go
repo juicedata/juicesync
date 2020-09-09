@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,6 +16,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
+
+const awsDefaultRegion = "us-east-1"
 
 type s3client struct {
 	bucket string
@@ -209,9 +212,13 @@ func newS3(endpoint, accessKey, secretKey string) ObjectStorage {
 		logger.Fatalf("Invalid endpoint %s: %s", endpoint, err.Error())
 	}
 
+	defaultRegion := awsDefaultRegion
+	if r := os.Getenv("AWS_DEFAULT_REGION"); r != "" {
+		defaultRegion = r
+	}
 	ssl := strings.ToLower(uri.Scheme) == "https"
 	awsConfig := &aws.Config{
-		Region:     aws.String("us-east-1"), // requires region...
+		Region:     aws.String(defaultRegion),
 		DisableSSL: aws.Bool(!ssl),
 		HTTPClient: httpClient,
 	}
