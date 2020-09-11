@@ -207,7 +207,7 @@ func (s *s3client) ListUploads(marker string) ([]*PendingPart, string, error) {
 	return parts, *result.NextKeyMarker, nil
 }
 
-func autoS3Region(bucketName, accessKey, secretKey  string) (string, error) {
+func autoS3Region(bucketName, accessKey, secretKey string) (string, error) {
 	awsConfig := &aws.Config{
 		HTTPClient: httpClient,
 	}
@@ -223,17 +223,17 @@ func autoS3Region(bucketName, accessKey, secretKey  string) (string, error) {
 	}
 
 	var (
-		err error
-		ses *session.Session
+		err     error
+		ses     *session.Session
 		service *s3.S3
-		result *s3.GetBucketLocationOutput
+		result  *s3.GetBucketLocationOutput
 	)
 	for _, r := range regions {
 		// try to get bucket location
 		awsConfig.Region = aws.String(r)
 		ses, err = session.NewSession(awsConfig)
 		if err != nil {
-			return "", fmt.Errorf("fail to create aws session: %s",  err)
+			return "", fmt.Errorf("fail to create aws session: %s", err)
 		}
 		service = s3.New(ses)
 		result, err = service.GetBucketLocation(&s3.GetBucketLocationInput{
@@ -247,7 +247,7 @@ func autoS3Region(bucketName, accessKey, secretKey  string) (string, error) {
 		if err1, ok := err.(awserr.Error); ok {
 			// InvalidAccessKeyId means the credentials is not for this region
 			if err1.Code() != "InvalidAccessKeyId" {
-				 return "", err
+				return "", err
 			}
 		}
 		logger.Debugf("Fail to get location of bucket %q from region %q endpoint: %s", bucketName, r, err)
@@ -269,7 +269,6 @@ func newS3(endpoint, accessKey, secretKey string) ObjectStorage {
 			logger.Fatalf("Can't guess your region for bucket %s: %s", bucketName, err)
 		}
 	} else { // get region in endpoint
-		defaultRegion := os.Getenv("AWS_DEFAULT_REGION")
 		hostParts = strings.SplitN(uri.Host, ".s3", 2)
 		bucketName = hostParts[0]
 		endpoint = "s3" + hostParts[1]
@@ -280,22 +279,13 @@ func newS3(endpoint, accessKey, secretKey string) ObjectStorage {
 			endpoint = endpoint[len("dualstack."):]
 		}
 		if endpoint == "amazonaws.com" {
-			if defaultRegion == "" {
-				defaultRegion = "us-east-1"
-			}
-			endpoint = defaultRegion + "." + endpoint
-		} else if endpoint == "amazonaws.com.cn" {
-			if defaultRegion == "" {
-				defaultRegion = "cn-north-1"
-			}
-			endpoint = defaultRegion + "." + endpoint
+			endpoint = "us-east-1." + endpoint
 		}
 		region = strings.Split(endpoint, ".")[0]
 		if region == "external-1" {
 			region = "us-east-1"
 		}
 	}
-	logger.Infof("Resolve s3 region: %s", region)
 
 	ssl := strings.ToLower(uri.Scheme) == "https"
 	awsConfig := &aws.Config{
