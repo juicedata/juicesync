@@ -117,7 +117,6 @@ func testStorage(t *testing.T, s ObjectStorage) {
 	}
 
 	if err := s.Delete("/test"); err == nil {
-		// COS Fail
 		t.Fatalf("delete non exists: %v", err)
 	}
 
