@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -266,13 +267,24 @@ func (h *hdfsclient) Chown(key string, owner, group string) error {
 	if group == "root" {
 		group = supergroup
 	}
+	user.Current()
 	return h.c.Chown(h.path(key), owner, group)
 }
 
-func newHDFS(addr, user, sk string) ObjectStorage {
+func newHDFS(addr, u, sk string) ObjectStorage {
+	username := ""
+	if os.Getenv("HADOOP_USER_NAME") != "" {
+		username = os.Getenv("HADOOP_USER_NAME")
+	} else {
+		current, err := user.Current()
+		if err != nil {
+			logger.Fatalf("get username failed")
+		}
+		username = current.Username
+	}
 	c, err := hdfs.NewClient(hdfs.ClientOptions{
 		Addresses: strings.Split(addr, ","),
-		User:      user,
+		User:      username,
 	})
 	if err != nil {
 		logger.Fatalf("new HDFS client %s: %s", addr, err)
