@@ -192,12 +192,16 @@ func (h *hdfsclient) walk(path string, walkFn filepath.WalkFunc) error {
 
 func (h *hdfsclient) ListAll(prefix, marker string) (<-chan *Object, error) {
 	listed := make(chan *Object, 10240)
+	root := h.path(prefix)
+	_, err := h.c.Stat(root)
+	if err != nil && err.(*os.PathError).Err == os.ErrNotExist && !strings.HasSuffix(prefix, "/") {
+		root = filepath.Dir(root)
+	}
+	_, err = h.c.Stat(root)
+	if err != nil && err.(*os.PathError).Err == os.ErrNotExist {
+		return listed, nil // return empty list
+	}
 	go func() {
-		root := h.path(prefix)
-		_, err := h.c.Stat(root)
-		if err != nil && err.(*os.PathError).Err == os.ErrNotExist {
-			root = filepath.Dir(root)
-		}
 		h.walk(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				if err == io.EOF {
@@ -267,18 +271,17 @@ func (h *hdfsclient) Chown(key string, owner, group string) error {
 	if group == "root" {
 		group = supergroup
 	}
-	user.Current()
 	return h.c.Chown(h.path(key), owner, group)
 }
 
-func newHDFS(addr, u, sk string) ObjectStorage {
-	username := ""
-	if os.Getenv("HADOOP_USER_NAME") != "" {
+func newHDFS(addr, username, sk string) ObjectStorage {
+	if username == "" {
 		username = os.Getenv("HADOOP_USER_NAME")
-	} else {
+	}
+	if username == "" {
 		current, err := user.Current()
 		if err != nil {
-			logger.Fatalf("get username failed")
+			logger.Fatalf("get current user: %s", err)
 		}
 		username = current.Username
 	}
