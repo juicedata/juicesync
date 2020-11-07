@@ -197,7 +197,8 @@ func findSelfPath() string {
 }
 
 func launchWorker(address string, config *config.Config, wg *sync.WaitGroup) {
-	for _, host := range config.Workers {
+	workers := strings.Split(strings.Join(config.Workers, ","), ",")
+	for _, host := range workers {
 		wg.Add(1)
 		go func(host string) {
 			defer wg.Done()
@@ -228,10 +229,10 @@ func launchWorker(address string, config *config.Config, wg *sync.WaitGroup) {
 				r := bufio.NewReader(stderr)
 				for {
 					line, err := r.ReadString('\n')
-					if err != nil {
+					if err != nil || len(line) == 0 {
 						return
 					}
-					println(host, line)
+					println(host, line[:len(line)-1])
 				}
 			}()
 			err = cmd.Wait()

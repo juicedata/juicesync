@@ -209,7 +209,7 @@ func main() {
 		},
 		&cli.StringSliceFlag{
 			Name:  "worker",
-			Usage: "a host to launch worker",
+			Usage: "hosts (seperated by comma) to launch worker",
 		},
 		&cli.BoolFlag{
 			Name:    "verbose",
