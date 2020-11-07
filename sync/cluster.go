@@ -214,7 +214,6 @@ func launchWorker(address string, config *config.Config, wg *sync.WaitGroup) {
 			var args = []string{host, rpath, "-manager", address}
 			args = append(args, os.Args[1:]...)
 			cmd = exec.Command("ssh", args...)
-			logger.Info(strings.Join(args, " "))
 			stderr, err := cmd.StderrPipe()
 			if err != nil {
 				logger.Errorf("redirect stderr: %s", err)
