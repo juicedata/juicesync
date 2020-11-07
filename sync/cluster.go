@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -70,7 +71,6 @@ func sendStats(addr string) {
 	}
 }
 
-
 func findLocalIP() (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -137,7 +137,7 @@ func startManager(tasks chan *object.Object) string {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		logger.Infof("send %d objects to %s", len(objs), req.RemoteAddr)
+		logger.Debugf("send %d objects to %s", len(objs), req.RemoteAddr)
 		w.Write(d)
 	})
 	http.HandleFunc("/stats", func(w http.ResponseWriter, req *http.Request) {
@@ -157,6 +157,7 @@ func startManager(tasks chan *object.Object) string {
 			return
 		}
 		updateStats(&r)
+		logger.Debugf("receive stats %+v from %s", r, req.RemoteAddr)
 		w.Write([]byte("OK"))
 	})
 	l, err := net.Listen("tcp", "0.0.0.0:0")
@@ -214,12 +215,26 @@ func launchWorker(address string, config *config.Config, wg *sync.WaitGroup) {
 			args = append(args, os.Args[1:]...)
 			cmd = exec.Command("ssh", args...)
 			logger.Info(strings.Join(args, " "))
+			stderr, err := cmd.StderrPipe()
+			if err != nil {
+				logger.Errorf("redirect stderr: %s", err)
+			}
 			err = cmd.Start()
 			if err != nil {
 				logger.Errorf("start juicesync at %s: %s", host, err)
 				return
 			}
 			logger.Infof("launch a worker on %s", host)
+			go func() {
+				r := bufio.NewReader(stderr)
+				for {
+					line, err := r.ReadString('\n')
+					if err != nil {
+						return
+					}
+					println(host, line)
+				}
+			}()
 			err = cmd.Wait()
 			if err != nil {
 				logger.Errorf("%s: %s", host, err)
@@ -245,7 +260,7 @@ func fetchJobs(todo chan *object.Object, config *config.Config) {
 			time.Sleep(time.Second)
 			continue
 		}
-		logger.Infof("got %d jobs", len(jobs))
+		logger.Debugf("got %d jobs", len(jobs))
 		if len(jobs) == 0 {
 			break
 		}
