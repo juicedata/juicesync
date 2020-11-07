@@ -3,6 +3,7 @@ package sync
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -69,6 +70,44 @@ func sendStats(addr string) {
 	}
 }
 
+
+func findLocalIP() (string, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return "", err
+	}
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 {
+			continue // interface down
+		}
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue // loopback interface
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return "", err
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil || ip.IsLoopback() {
+				continue
+			}
+			ip = ip.To4()
+			if ip == nil {
+				continue // not an ipv4 address
+			}
+			return ip.String(), nil
+		}
+	}
+	return "", errors.New("are you connected to the network?")
+}
+
 func startManager(tasks chan *object.Object) string {
 	http.HandleFunc("/fetch", func(w http.ResponseWriter, req *http.Request) {
 		var objs []*object.Object
@@ -120,13 +159,19 @@ func startManager(tasks chan *object.Object) string {
 		updateStats(&r)
 		w.Write([]byte("OK"))
 	})
-	l, err := net.Listen("tcp", ":0")
+	l, err := net.Listen("tcp", "0.0.0.0:0")
 	if err != nil {
 		logger.Fatalf("listen: %s", err)
 	}
 	logger.Infof("Listen at %s", l.Addr())
 	go http.Serve(l, nil)
-	return l.Addr().String()
+	ip, err := findLocalIP()
+	if err != nil {
+		logger.Fatalf("find local ip: %s", err)
+	}
+	ps := strings.Split(l.Addr().String(), ":")
+	port := ps[len(ps)-1]
+	return fmt.Sprintf("%s:%s", ip, port)
 }
 
 func findSelfPath() string {
@@ -165,17 +210,16 @@ func launchWorker(address string, config *config.Config, wg *sync.WaitGroup) {
 				return
 			}
 			// launch juicesync
-			var args = []string{"ssh", host}
-			args = append(args, os.Args...)
-			args[2] = rpath
-			args = append(args, "-manager")
-			args = append(args, address)
-			cmd = exec.Command("juicesync")
+			var args = []string{host, rpath, "-manager", address}
+			args = append(args, os.Args[1:]...)
+			cmd = exec.Command("ssh", args...)
+			logger.Info(strings.Join(args, " "))
 			err = cmd.Start()
 			if err != nil {
 				logger.Errorf("start juicesync at %s: %s", host, err)
 				return
 			}
+			logger.Infof("launch a worker on %s", host)
 			err = cmd.Wait()
 			if err != nil {
 				logger.Errorf("%s: %s", host, err)
