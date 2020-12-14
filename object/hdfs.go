@@ -338,7 +338,9 @@ func newHDFS(addr, username, sk string) ObjectStorage {
 	}
 
 	options := hdfs.ClientOptionsFromConf(conf)
-	options.Addresses = strings.Split(addr, ",")
+	if addr != "" {
+		options.Addresses = strings.Split(addr, ",")
+	}
 
 	if options.KerberosClient != nil {
 		options.KerberosClient, err = getKerberosClient()
