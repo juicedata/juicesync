@@ -56,11 +56,11 @@ func newOOS(endpoint, accessKey, secretKey string) ObjectStorage {
 		Endpoint:         &endpoint,
 		DisableSSL:       aws.Bool(!ssl),
 		S3ForcePathStyle: aws.Bool(true),
-		HTTPClient:       httpClient,
+		// HTTPClient:       httpClient,
 		Credentials:      credentials.NewStaticCredentials(accessKey, secretKey, ""),
 	}
 
-	ses := session.New(awsConfig.WithLogLevel(aws.LogDebugWithHTTPBody))
+	ses := session.New(awsConfig)
 	return &oos{s3client{bucket, s3.New(ses), ses}}
 }
 
