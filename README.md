@@ -144,3 +144,5 @@ Note:
   The S3 endpoint should be used for Qiniu, for example, abc.cn-north-1-s3.qiniu.com.
   If there are keys starting with "/", the domain should be provided as `QINIU_DOMAIN`.
 - sftp: if your target machine uses SSH certificates instead of password, you should pass the path to your private key file to the environment variable `SSH_PRIVATE_KEY_PATH`, like ` SSH_PRIVATE_KEY_PATH=/home/someuser/.ssh/id_rsa juicesync [src] [dst]`.
+- Scaleway:
+  * The credential can be provided by environment variable `SCW_ACCESS_KEY` and `SCW_SECRET_KEY` .

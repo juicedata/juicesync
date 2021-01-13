@@ -5,6 +5,7 @@ package object
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -50,6 +51,13 @@ func newScw(endpoint, accessKey, secretKey string) (ObjectStorage, error) {
 	bucket := hostParts[0]
 	region := hostParts[2]
 	endpoint = uri.Host[len(bucket)+1:]
+
+	if accessKey == "" {
+		accessKey = os.Getenv("SCW_ACCESS_KEY")
+	}
+	if secretKey == "" {
+		secretKey = os.Getenv("SCW_SECRET_KEY")
+	}
 
 	awsConfig := &aws.Config{
 		Region:           &region,
