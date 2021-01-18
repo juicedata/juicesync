@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
+	"math/bits"
 
 	"github.com/juicedata/juicesync/config"
 	"github.com/juicedata/juicesync/object"
@@ -43,6 +44,17 @@ var (
 )
 
 var logger = utils.GetLogger("juicesync")
+
+// human readable bytes size
+func formatSize(bytes uint64) string{
+	units := [7]string{" ", "K", "M", "G", "T", "P", "E" }
+    if bytes < 1024 {
+		return fmt.Sprintf("%v B",bytes)
+	}
+	z := (63 - bits.LeadingZeros64(bytes)) / 10;
+	p := int(z*10)
+	return fmt.Sprintf("%.3f %sB", float64(bytes) / float64(int(1) << p), units[z])
+}
 
 // iterate on all the keys that starts at marker from object storage.
 func iterate(store object.ObjectStorage, start, end string) (<-chan *object.Object, error) {
@@ -622,7 +634,7 @@ func Sync(src, dst object.ObjectStorage, config *config.Config) error {
 		return fmt.Errorf("Failed to copy %d objects", failed)
 	}
 	if config.Manager == "" {
-		logger.Infof("Found: %d, copied: %d, deleted: %d, failed: %d", found, copied, deleted, failed)
+		logger.Infof("Found: %d, copied: %d, deleted: %d, failed: %d, transfered: %s", found, copied, deleted, failed, formatSize(uint64(copiedBytes)))
 	} else {
 		sendStats(config.Manager)
 	}
