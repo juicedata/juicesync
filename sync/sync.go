@@ -634,7 +634,7 @@ func Sync(src, dst object.ObjectStorage, config *config.Config) error {
 		return fmt.Errorf("Failed to copy %d objects", failed)
 	}
 	if config.Manager == "" {
-		logger.Infof("Found: %d, copied: %d, deleted: %d, failed: %d, transfered: %s", found, copied, deleted, failed, formatSize(uint64(copiedBytes)))
+		logger.Infof("Found: %d, copied: %d, deleted: %d, failed: %d, transferred: %s", found, copied, deleted, failed, formatSize(uint64(copiedBytes)))
 	} else {
 		sendStats(config.Manager)
 	}
