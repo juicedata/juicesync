@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/bits"
 	"os"
 	"regexp"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
-	"math/bits"
 
 	"github.com/juicedata/juicesync/config"
 	"github.com/juicedata/juicesync/object"
@@ -46,14 +46,14 @@ var (
 var logger = utils.GetLogger("juicesync")
 
 // human readable bytes size
-func formatSize(bytes uint64) string{
-	units := [7]string{" ", "K", "M", "G", "T", "P", "E" }
-    if bytes < 1024 {
-		return fmt.Sprintf("%v B",bytes)
+func formatSize(bytes uint64) string {
+	units := [7]string{" ", "K", "M", "G", "T", "P", "E"}
+	if bytes < 1024 {
+		return fmt.Sprintf("%v B", bytes)
 	}
-	z := (63 - bits.LeadingZeros64(bytes)) / 10;
-	p := int(z*10)
-	return fmt.Sprintf("%.3f %sB", float64(bytes) / float64(int(1) << p), units[z])
+	z := (63 - bits.LeadingZeros64(bytes)) / 10
+	p := int(z * 10)
+	return fmt.Sprintf("%.3f %sB", float64(bytes)/float64(int(1)<<p), units[z])
 }
 
 // iterate on all the keys that starts at marker from object storage.
