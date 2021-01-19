@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math/bits"
 	"os"
 	"regexp"
 	"strings"
@@ -51,9 +50,13 @@ func formatSize(bytes uint64) string {
 	if bytes < 1024 {
 		return fmt.Sprintf("%v B", bytes)
 	}
-	z := (63 - bits.LeadingZeros64(bytes)) / 10
-	p := int(z * 10)
-	return fmt.Sprintf("%.3f %sB", float64(bytes)/float64(int(1)<<p), units[z])
+	z := 0
+	v := float64(bytes)
+	for v > 1024.0 {
+		z++
+		v /= 1024.0
+	}
+	return fmt.Sprintf("%.3f %siB", v, units[z])
 }
 
 // iterate on all the keys that starts at marker from object storage.
