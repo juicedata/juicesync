@@ -23,6 +23,7 @@ require (
 	github.com/ks3sdklib/aws-sdk-go v0.0.0-20180820074416-dafab05ad142
 	github.com/kurin/blazer v0.2.1
 	github.com/mattn/go-isatty v0.0.4
+	github.com/ncw/swift v1.0.53
 	github.com/onsi/ginkgo v1.13.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.0
