@@ -379,7 +379,6 @@ func (f *sftpStore) ListAll(prefix, marker string) (<-chan *Object, error) {
 }
 
 func newSftp(endpoint, user, pass string) (ObjectStorage, error) {
-	logger.Infof("endpoint = %s", endpoint)
 	parts := strings.Split(endpoint, ":")
 	root := filepath.Clean(parts[len(parts)-1])
 	port := 22
