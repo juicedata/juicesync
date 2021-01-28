@@ -13,10 +13,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/juicedata/juicesync/config"
-	"github.com/juicedata/juicesync/object"
-	"github.com/juicedata/juicesync/sync"
-	"github.com/juicedata/juicesync/utils"
+	"github.com/juicedata/juicefs/pkg/object"
+	"github.com/juicedata/juicefs/pkg/sync"
+	"github.com/juicedata/juicefs/pkg/utils"
 	"github.com/juicedata/juicesync/versioninfo"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -44,7 +43,7 @@ func supportHTTPS(name, endpoint string) bool {
 	return true
 }
 
-func createStorage(uri string, conf *config.Config) (object.ObjectStorage, error) {
+func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) {
 	if !strings.Contains(uri, "://") {
 		if strings.Contains(uri, ":") {
 			var user string
@@ -115,7 +114,7 @@ func createStorage(uri string, conf *config.Config) (object.ObjectStorage, error
 }
 
 func run(c *cli.Context) error {
-	config := config.NewConfigFromCli(c)
+	config := sync.NewConfigFromCli(c)
 	go http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", config.HTTPPort), nil)
 
 	if config.Verbose {
