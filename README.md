@@ -130,6 +130,7 @@ Note:
 
 - It's recommended to run juicesync in the target region to have better performance.
 - Auto discover endpoint for bucket of S3, OSS, COS, OBS, BOS, `SRC` and `DST` can use format `NAME://[ACCESS_KEY:SECRET_KEY@]BUCKET[/PREFIX]` . `ACCESS_KEY` and `SECRET_KEY` can be provided by corresponding environment variables (see below).
+- When you get '/' in ak or sk strings,you need to replace '/' with '%2F'.
 - S3:
   * The access key and secret key for S3 could be provided by `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, or *IAM* role.
 - Wasb(Windows Azure Storage Blob)
