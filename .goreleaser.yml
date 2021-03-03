@@ -1,11 +1,15 @@
 builds:
   - env:
-      - CGO_ENABLED=1
+      - CGO_ENABLED=0
     ldflags:
       - -s -w
       - -X github.com/juicedata/juicesync/versioninfo.VERSION={{.Version}}
       - -X github.com/juicedata/juicesync/versioninfo.REVISION={{.Commit}}
       - -X github.com/juicedata/juicesync/versioninfo.REVISIONDATE={{.Date}}
+    goarch:
+      - amd64
+      - arm64
+      - "386"
 
 archives:
   - replacements:
