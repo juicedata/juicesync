@@ -14,5 +14,8 @@ LDFLAGS ?= -s -w -X $(REPO)/versioninfo.REVISION=$(REVISION) \
 juicesync:
 	go build -ldflags="$(LDFLAGS)" -o juicesync
 
+juicesync.exe: *.go utils/*.go versioninfo/*.go
+	GOOS=windows go build -ldflags="$(LDFLAGS)" -buildmode exe -o juicesync.exe
+
 test:
 	go test ./...
