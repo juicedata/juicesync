@@ -303,6 +303,8 @@ github.com/juicedata/juicefs v0.11.1-0.20210322053106-0757f2bf87e9 h1:+X6WuIZfMC
 github.com/juicedata/juicefs v0.11.1-0.20210322053106-0757f2bf87e9/go.mod h1:0KdN5w7ctpQ+8yekqkMuPxgxbjV3i1WvpNM1K3jTWZg=
 github.com/juicedata/juicefs v0.11.1-0.20210323073827-17100a9c1f40 h1:+ETR7noKdy5VuFqlG9NPncEVsopZ75jCjRPH6wFYgOw=
 github.com/juicedata/juicefs v0.11.1-0.20210323073827-17100a9c1f40/go.mod h1:0KdN5w7ctpQ+8yekqkMuPxgxbjV3i1WvpNM1K3jTWZg=
+github.com/juicedata/juicefs v0.11.1-0.20210323075112-562bdfbb3387 h1:S1KFWXQ3aMk2fylp1StdPzWEhO6n35z9AvH58efuvws=
+github.com/juicedata/juicefs v0.11.1-0.20210323075112-562bdfbb3387/go.mod h1:0KdN5w7ctpQ+8yekqkMuPxgxbjV3i1WvpNM1K3jTWZg=
 github.com/juju/ratelimit v1.0.1 h1:+7AIFJVQ0EQgq/K9+0Krm7m530Du7tIz0METWzN0RgY=
 github.com/juju/ratelimit v1.0.1/go.mod h1:qapgC/Gy+xNh9UxzV13HGGl/6UXNN+ct+vwSgWNm/qk=
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
