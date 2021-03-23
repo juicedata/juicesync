@@ -301,6 +301,8 @@ github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfV
 github.com/juicedata/godaemon v0.0.0-20210118074000-659b6681b236/go.mod h1:dlxKkLh3qAIPtgr2U/RVzsZJDuXA1ffg+Njikfmhvgw=
 github.com/juicedata/juicefs v0.11.1-0.20210322053106-0757f2bf87e9 h1:+X6WuIZfMCLhxYLnoRns2pTuA5w67YqZpLtYUnUMi4A=
 github.com/juicedata/juicefs v0.11.1-0.20210322053106-0757f2bf87e9/go.mod h1:0KdN5w7ctpQ+8yekqkMuPxgxbjV3i1WvpNM1K3jTWZg=
+github.com/juicedata/juicefs v0.11.1-0.20210323073827-17100a9c1f40 h1:+ETR7noKdy5VuFqlG9NPncEVsopZ75jCjRPH6wFYgOw=
+github.com/juicedata/juicefs v0.11.1-0.20210323073827-17100a9c1f40/go.mod h1:0KdN5w7ctpQ+8yekqkMuPxgxbjV3i1WvpNM1K3jTWZg=
 github.com/juju/ratelimit v1.0.1 h1:+7AIFJVQ0EQgq/K9+0Krm7m530Du7tIz0METWzN0RgY=
 github.com/juju/ratelimit v1.0.1/go.mod h1:qapgC/Gy+xNh9UxzV13HGGl/6UXNN+ct+vwSgWNm/qk=
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=

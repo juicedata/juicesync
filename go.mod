@@ -3,7 +3,7 @@ module github.com/juicedata/juicesync
 require (
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/dnaeon/go-vcr v1.1.0 // indirect
-	github.com/juicedata/juicefs v0.11.1-0.20210322053106-0757f2bf87e9
+	github.com/juicedata/juicefs v0.11.1-0.20210323073827-17100a9c1f40
 	github.com/sirupsen/logrus v1.7.0
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/crypto v0.0.0-20201124201722-c8d3bf9c5392
