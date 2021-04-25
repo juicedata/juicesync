@@ -55,7 +55,6 @@ func isFilePath(uri string) bool {
 	return !strings.Contains(uri, ":")
 }
 
-
 func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) {
 	if !strings.Contains(uri, "://") {
 		if isFilePath(uri) {
@@ -115,6 +114,10 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 	} else {
 		endpoint = "http://" + endpoint
 	}
+	if name == "minio" {
+		// bucket name is part of path
+		endpoint += u.Path
+	}
 
 	store, err := object.CreateStorage(name, endpoint, accessKey, secretKey)
 	if err != nil {
@@ -126,8 +129,17 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 			conf.Perms = false
 		}
 	}
-	if name != "file" && len(u.Path) > 1 {
-		store = object.WithPrefix(store, u.Path[1:])
+	switch name {
+	case "file":
+	case "minio":
+		if strings.Count(u.Path, "/") > 1 {
+			// skip bucket name
+			store = object.WithPrefix(store, strings.SplitN(u.Path[1:], "/", 2)[1])
+		}
+	default:
+		if len(u.Path) > 1 {
+			store = object.WithPrefix(store, u.Path[1:])
+		}
 	}
 	return store, nil
 }
