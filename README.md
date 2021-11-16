@@ -4,6 +4,8 @@
 
 Juicesync is a tool to move your data in object storage between any clouds or regions, also support local file, sftp and HDFS.
 
+juicesync is an alias to `juicefs sync`, please use [juicefs](https://github.com/juicedata/juicefs) instead.
+
 # How it works?
 
 Juicesync will scan all the keys from two object stores, and comparing them in ascending order to find out missing or outdated keys, then download them from the source and upload them to the destination in parallel.
@@ -20,21 +22,12 @@ brew install juicedata/tap/juicesync
 
 From [here](https://github.com/juicedata/juicesync/releases)
 
-# Develop
+# Build from source
 
-We use go mod to manage modules, if not sure how to use this, refer to [The official document](https://github.com/golang/go/wiki/Modules).
-
-* If you're using Go 1.13
+Juicesync requires Go 1.16+ to build:
 
 	```
-	go build
-	```
-
-* If you're using Go >= 1.11, < 1.13
-
-	```
-	export GO111MODULE=on
-	go build
+	go get github.com/juicedata/juicesync
 	```
 
 # Upgrade
@@ -54,7 +47,7 @@ USAGE:
     SRC and DST should be [NAME://][ACCESS_KEY:SECRET_KEY@]BUCKET[.ENDPOINT][/PREFIX]
 
 VERSION:
-   v0.5.0-1-gce9968c
+   v0.7.1-2-g819f9c0
 
 COMMANDS:
    help, h  Shows a list of commands or help for one command
@@ -75,6 +68,8 @@ GLOBAL OPTIONS:
    --include PATTERN          only include keys containing PATTERN (POSIX regular expressions)
    --manager value            manager address
    --worker value             hosts (seperated by comma) to launch worker
+   --bwlimit value            limit bandwidth in Mbps (default: unlimited) (default: 0)
+   --no-https                 donot use HTTPS (default: false)
    --verbose, -v              turn on debug log (default: false)
    --quiet, -q                change log level to ERROR (default: false)
    --help, -h                 show help (default: false)
@@ -104,6 +99,14 @@ SRC and DST must be an URI of the following object storage:
 - scw: Scaleway Object Storage
 - minio: MinIO
 - scs: Sina Cloud Storage
+- wasabi: Wasabi object storage
+- ibmcos: IBM Cloud object storage
+- webdav: WebDAV
+- tikv:  TiKV cluster
+- redis: Redis cluster
+- mem: In-memory object store
+
+please check the full list: [supported object storage](https://github.com/juicedata/juicefs/blob/main/docs/en/how_to_setup_object_storage.md#supported-object-storage)
 
 SRC and DST should be in the following format:
 
@@ -124,7 +127,11 @@ Some examples:
 - obs://my-bucket
 - bos://my-bucket
 - minio://myip:9000/bucket
-- scs://access-key:secret-key-id@my-bucket.sinacloud.net/prefix
+- scs://access-key:secret-key-id@my-bucket.sinacloud.net/prefix\
+- webdav://host:port/prefix
+- tikv://host1:port,host2:port,host3:port/prefix
+- redis://localhost/1
+- mem://
 
 Note:
 
