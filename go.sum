@@ -446,6 +446,8 @@ github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfV
 github.com/juicedata/godaemon v0.0.0-20210629045518-3da5144a127d/go.mod h1:dlxKkLh3qAIPtgr2U/RVzsZJDuXA1ffg+Njikfmhvgw=
 github.com/juicedata/juicefs v0.16.2 h1:cTdycX+ApaMHfYbehfCslVbu46SN1iPYknVAkFAygcc=
 github.com/juicedata/juicefs v0.16.2/go.mod h1:xSfnn6taoW9G6TQdUazaP8Y6N2abzOcqombrVGLeKoU=
+github.com/juicedata/juicefs v0.17.1 h1:ro9hrsHCvntWZfBBgoDH69lPpvWK9aaqRvRd0FKXQcQ=
+github.com/juicedata/juicefs v0.17.1/go.mod h1:n7SWozg0nsEeVCBmVlHjngeWXaSobowSccY2YtozafM=
 github.com/juju/ratelimit v1.0.1 h1:+7AIFJVQ0EQgq/K9+0Krm7m530Du7tIz0METWzN0RgY=
 github.com/juju/ratelimit v1.0.1/go.mod h1:qapgC/Gy+xNh9UxzV13HGGl/6UXNN+ct+vwSgWNm/qk=
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
