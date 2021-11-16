@@ -1,5 +1,7 @@
 module github.com/juicedata/juicesync
 
+go 1.16
+
 require (
 	github.com/juicedata/juicefs v0.17.1
 	github.com/sirupsen/logrus v1.7.0
@@ -7,4 +9,6 @@ require (
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 )
 
-go 1.13
+replace github.com/golang-jwt/jwt v3.2.2+incompatible => github.com/dgrijalva/jwt-go v3.2.0+incompatible
+
+replace github.com/dgrijalva/jwt-go v3.2.0+incompatible => github.com/golang-jwt/jwt v3.2.2+incompatible
