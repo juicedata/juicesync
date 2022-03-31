@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -53,6 +54,12 @@ func isFilePath(uri string) bool {
 		return true
 	}
 	return !strings.Contains(uri, ":")
+}
+
+func isS3PathType(endpoint string) bool {
+	//localhost[:8080] 127.0.0.1[:8080]  s3.ap-southeast-1.amazonaws.com[:8080] s3-ap-southeast-1.amazonaws.com[:8080]
+	pattern := `^((localhost)|(s3[.-].*\.amazonaws\.com)|((1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.((1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.){2}(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)))?(:\d*)?$`
+	return regexp.MustCompile(pattern).MatchString(endpoint)
 }
 
 func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) {
@@ -106,6 +113,12 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 	}
 	name := strings.ToLower(u.Scheme)
 	endpoint := u.Host
+	if conf.Links && name != "file" {
+		logger.Warnf("storage %s does not support symlink, ignore it", uri)
+		conf.Links = false
+	}
+	isS3PathTypeUrl := isS3PathType(endpoint)
+
 	if name == "file" {
 		endpoint = u.Path
 	} else if name == "hdfs" {
@@ -114,7 +127,7 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 	} else {
 		endpoint = "http://" + endpoint
 	}
-	if name == "minio" {
+	if name == "minio" || name == "s3" && isS3PathTypeUrl {
 		// bucket name is part of path
 		endpoint += u.Path
 	}
@@ -135,6 +148,12 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 		if strings.Count(u.Path, "/") > 1 {
 			// skip bucket name
 			store = object.WithPrefix(store, strings.SplitN(u.Path[1:], "/", 2)[1])
+		}
+	case "s3":
+		if isS3PathTypeUrl && strings.Count(u.Path, "/") > 1 {
+			store = object.WithPrefix(store, strings.SplitN(u.Path[1:], "/", 2)[1])
+		} else if len(u.Path) > 1 {
+			store = object.WithPrefix(store, u.Path[1:])
 		}
 	default:
 		if len(u.Path) > 1 {
@@ -185,6 +204,40 @@ func main() {
 	app.Name = versioninfo.NAME
 	app.Usage = "rsync for cloud storage"
 	app.UsageText = versioninfo.USAGE
+	app.Description = `
+	This tool spawns multiple threads to concurrently syncs objects of two data storages.
+	SRC and DST should be [NAME://][ACCESS_KEY:SECRET_KEY@]BUCKET[.ENDPOINT][/PREFIX].
+
+	Include/exclude pattern rules:
+	The include/exclude rules each specify a pattern that is matched against the names of the files that are going to be transferred.  These patterns can take several forms:
+
+	- if the pattern ends with a / then it will only match a directory, not a file, link, or device.
+	- it chooses between doing a simple string match and wildcard matching by checking if the pattern contains one of these three wildcard characters: '*', '?', and '[' .
+	- a '*' matches any non-empty path component (it stops at slashes).
+	- a '?' matches any character except a slash (/).
+	- a '[' introduces a character class, such as [a-z] or [[:alpha:]].
+	- in a wildcard pattern, a backslash can be used to escape a wildcard character, but it is matched literally when no wildcards are present.
+	- it does a prefix match of pattern, i.e. always recursive
+
+	Examples:
+	# Sync object from OSS to S3
+	$ juicesync oss://mybucket.oss-cn-shanghai.aliyuncs.com s3://mybucket.s3.us-east-2.amazonaws.com
+
+	# Sync objects from S3 to JuiceFS
+	$ juicefs mount -d redis://localhost /mnt/jfs
+	$ juicesync s3://mybucket.s3.us-east-2.amazonaws.com/ /mnt/jfs/
+
+	# SRC: a1/b1,a2/b2,aaa/b1   DST: empty   sync result: aaa/b1
+	$ juicesync --exclude='a?/b*' s3://mybucket.s3.us-east-2.amazonaws.com/ /mnt/jfs/
+
+	# SRC: a1/b1,a2/b2,aaa/b1   DST: empty   sync result: a1/b1,aaa/b1
+	$ juicesync --include='a1/b1' --exclude='a[1-9]/b*' s3://mybucket.s3.us-east-2.amazonaws.com/ /mnt/jfs/
+
+	# SRC: a1/b1,a2/b2,aaa/b1,b1,b2  DST: empty   sync result: a1/b1,b2
+	$ juicesync --include='a1/b1' --exclude='a*' --include='b2' --exclude='b?' s3://mybucket.s3.us-east-2.amazonaws.com/ /mnt/jfs/
+
+	Details: https://juicefs.com/docs/community/administration/sync
+	Supported storage systems: https://juicefs.com/docs/community/how_to_setup_object_storage#supported-object-storage`
 	app.Version = versioninfo.VERSION
 	app.Copyright = "AGPLv3"
 	app.Flags = []cli.Flag{
@@ -245,11 +298,21 @@ func main() {
 		},
 		&cli.StringSliceFlag{
 			Name:  "exclude",
-			Usage: "exclude keys containing `PATTERN` (POSIX regular expressions)",
+			Usage: "exclude Key matching PATTERN",
 		},
 		&cli.StringSliceFlag{
 			Name:  "include",
-			Usage: "only include keys containing `PATTERN` (POSIX regular expressions)",
+			Usage: "don't exclude Key matching PATTERN, need to be used with \"--exclude\" option",
+		},
+		&cli.BoolFlag{
+			Name:    "links",
+			Aliases: []string{"l"},
+			Usage:   "copy symlinks as symlinks",
+		},
+		&cli.Int64Flag{
+			Name:  "limit",
+			Usage: "limit the number of objects that will be processed",
+			Value: -1,
 		},
 		&cli.StringFlag{
 			Name:  "manager",
@@ -266,6 +329,14 @@ func main() {
 		&cli.BoolFlag{
 			Name:  "no-https",
 			Usage: "donot use HTTPS",
+		},
+		&cli.BoolFlag{
+			Name:  "check-all",
+			Usage: "verify integrity of all files in source and destination",
+		},
+		&cli.BoolFlag{
+			Name:  "check-new",
+			Usage: "verify integrity of newly copied files",
 		},
 		&cli.BoolFlag{
 			Name:    "verbose",
