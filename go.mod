@@ -3,7 +3,7 @@ module github.com/juicedata/juicesync
 go 1.17
 
 require (
-	github.com/juicedata/juicefs v0.13.2-0.20220330094748-5284e156245b
+	github.com/juicedata/juicefs v0.13.2-0.20220331045934-993fba49a294
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.4.0
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
