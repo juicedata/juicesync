@@ -117,24 +117,24 @@ SRC and DST should be in the following format:
 
 Some examples:
 
-- local/path
-- user@host:port:path
-- file:///Users/me/code/
-- hdfs://hdfs@namenode1:9000,namenode2:9000/user/
-- s3://my-bucket/
-- s3://access-key:secret-key-id@my-bucket/prefix
-- wasb://account-name:account-key@my-container/prefix
-- gcs://my-bucket.us-west1.googleapi.com/
-- oss://test
-- cos://test-1234
-- obs://my-bucket
-- bos://my-bucket
-- minio://myip:9000/bucket
-- scs://access-key:secret-key-id@my-bucket.sinacloud.net/prefix\
-- webdav://host:port/prefix
-- tikv://host1:port,host2:port,host3:port/prefix
-- redis://localhost/1
-- mem://
+- `local/path`
+- `user@host:port:path`
+- `file:///Users/me/code/`
+- `hdfs://hdfs@namenode1:9000,namenode2:9000/user/`
+- `s3://my-bucket/`
+- `s3://access-key:secret-key-id@my-bucket/prefix`
+- `wasb://account-name:account-key@my-container/prefix`
+- `gcs://my-bucket.us-west1.googleapi.com/`
+- `oss://test`
+- `cos://test-1234`
+- `obs://my-bucket`
+- `bos://my-bucket`
+- `minio://myip:9000/bucket`
+- `scs://access-key:secret-key-id@my-bucket.sinacloud.net/prefix`
+- `webdav://host:port/prefix`
+- `tikv://host1:port,host2:port,host3:port/prefix`
+- `redis://localhost/1`
+- `mem://`
 
 Note:
 
