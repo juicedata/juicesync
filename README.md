@@ -4,7 +4,7 @@
 
 Juicesync is a tool to move your data in object storage between any clouds or regions, also support local disk, SFTP, HDFS and many more storage.
 
-Juicesync is an alias to [`juicefs sync`](https://juicefs.com/docs/community/administration/sync), but it may not contain the latest features and bug fixes of the `juicefs sync` command, so please use [JuiceFS](https://github.com/juicedata/juicefs) instead.
+Juicesync is an alias to [`juicefs sync`](https://juicefs.com/docs/community/administration/sync), but it may not contain the latest features and bug fixes of the `juicefs sync` command, so it's recommended use [JuiceFS](https://github.com/juicedata/juicefs) instead.
 
 ## How it works?
 
