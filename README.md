@@ -2,40 +2,44 @@
 
 ![build](https://github.com/juicedata/juicesync/workflows/build/badge.svg) ![release](https://github.com/juicedata/juicesync/workflows/release/badge.svg)
 
-Juicesync is a tool to move your data in object storage between any clouds or regions, also support local file, sftp and HDFS.
+Juicesync is a tool to move your data in object storage between any clouds or regions, also support local disk, SFTP, HDFS and many more storage.
 
-juicesync is an alias to `juicefs sync`, please use [juicefs](https://github.com/juicedata/juicefs) instead.
+Juicesync is an alias to [`juicefs sync`](https://juicefs.com/docs/community/administration/sync), but it may not contain the latest features and bug fixes of the `juicefs sync` command, so it's recommended use [JuiceFS](https://github.com/juicedata/juicefs) instead.
 
-# How it works?
+## How it works?
 
 Juicesync will scan all the keys from two object stores, and comparing them in ascending order to find out missing or outdated keys, then download them from the source and upload them to the destination in parallel.
 
-# Install
+## Install
 
-## With Homebrew
+### With Homebrew
 
 ```sh
 brew install juicedata/tap/juicesync
 ```
 
-## Download binary release
+### Download binary release
 
 From [here](https://github.com/juicedata/juicesync/releases)
 
-# Build from source
+## Build from source
 
 Juicesync requires Go 1.16+ to build:
 
-	```
-	go get github.com/juicedata/juicesync
-	```
+```sh
+go get github.com/juicedata/juicesync
+```
 
-# Upgrade
+## Upgrade
 
-* Use Homebrew to upgrade or
+Please select the corresponding upgrade method according to different installation methods:
+
+* Use Homebrew to upgrade
 * Download a new version from [release page](https://github.com/juicedata/juicesync/releases)
 
-# Usage
+## Usage
+
+Please check the `juicefs sync` command documentation for detailed usage: https://juicefs.com/docs/community/administration/sync
 
 ```
 $ juicesync -h
@@ -78,35 +82,34 @@ GLOBAL OPTIONS:
 
 SRC and DST must be an URI of the following object storage:
 
-- file: local files
+- file: local disk
 - sftp: FTP via SSH
 - s3: Amazon S3
 - hdfs: Hadoop File System (HDFS)
 - gcs: Google Cloud Storage
-- wasb: Windows Azure Blob Storage
-- oss: Aliyun OSS
+- wasb: Azure Blob Storage
+- oss: Alibaba Cloud OSS
 - cos: Tencent Cloud COS
-- ks3: KSYun KS3
-- ufile: UCloud UFile
-- qingstor: Qingcloud QingStor
+- ks3: Kingsoft KS3
+- ufile: UCloud US3
+- qingstor: Qing Cloud QingStor
 - bos: Baidu Cloud Object Storage
-- jss: JCloud Object Storage
-- qiniu: Qiniu
+- qiniu: Qiniu Object Storage
 - b2: Backblaze B2
-- space: Digital Ocean Space
-- obs: Huawei Object Storage Service
+- space: DigitalOcean Space
+- obs: Huawei Cloud OBS
 - oos: CTYun OOS
 - scw: Scaleway Object Storage
 - minio: MinIO
 - scs: Sina Cloud Storage
-- wasabi: Wasabi object storage
-- ibmcos: IBM Cloud object storage
+- wasabi: Wasabi Object Storage
+- ibmcos: IBM Cloud Object Storage
 - webdav: WebDAV
-- tikv:  TiKV cluster
-- redis: Redis cluster
+- tikv: TiKV
+- redis: Redis
 - mem: In-memory object store
 
-please check the full list: [supported object storage](https://github.com/juicedata/juicefs/blob/main/docs/en/how_to_setup_object_storage.md#supported-object-storage)
+Please check the full supported list [here](https://juicefs.com/docs/community/how_to_setup_object_storage#supported-object-storage).
 
 SRC and DST should be in the following format:
 
@@ -114,29 +117,29 @@ SRC and DST should be in the following format:
 
 Some examples:
 
-- local/path
-- user@host:port:path
-- file:///Users/me/code/
-- hdfs://hdfs@namenode1:9000,namenode2:9000/user/
-- s3://my-bucket/
-- s3://access-key:secret-key-id@my-bucket/prefix
-- wasb://account-name:account-key@my-container/prefix
-- gcs://my-bucket.us-west1.googleapi.com/
-- oss://test
-- cos://test-1234
-- obs://my-bucket
-- bos://my-bucket
-- minio://myip:9000/bucket
-- scs://access-key:secret-key-id@my-bucket.sinacloud.net/prefix\
-- webdav://host:port/prefix
-- tikv://host1:port,host2:port,host3:port/prefix
-- redis://localhost/1
-- mem://
+- `local/path`
+- `user@host:port:path`
+- `file:///Users/me/code/`
+- `hdfs://hdfs@namenode1:9000,namenode2:9000/user/`
+- `s3://my-bucket/`
+- `s3://access-key:secret-key-id@my-bucket/prefix`
+- `wasb://account-name:account-key@my-container/prefix`
+- `gcs://my-bucket.us-west1.googleapi.com/`
+- `oss://test`
+- `cos://test-1234`
+- `obs://my-bucket`
+- `bos://my-bucket`
+- `minio://myip:9000/bucket`
+- `scs://access-key:secret-key-id@my-bucket.sinacloud.net/prefix`
+- `webdav://host:port/prefix`
+- `tikv://host1:port,host2:port,host3:port/prefix`
+- `redis://localhost/1`
+- `mem://`
 
 Note:
 
 - It's recommended to run juicesync in the target region to have better performance.
-- Auto discover endpoint for bucket of S3, OSS, COS, OBS, BOS, `SRC` and `DST` can use format `NAME://[ACCESS_KEY:SECRET_KEY@]BUCKET[/PREFIX]` . `ACCESS_KEY` and `SECRET_KEY` can be provided by corresponding environment variables (see below).
+- Auto discover endpoint for bucket of S3, OSS, COS, OBS, BOS, `SRC` and `DST` can use format `NAME://[ACCESS_KEY:SECRET_KEY@]BUCKET[/PREFIX]`. `ACCESS_KEY` and `SECRET_KEY` can be provided by corresponding environment variables (see below).
 - When you get "/" in `ACCESS_KEY` or `SECRET_KEY` strings,you need to replace "/" with "%2F".
 - S3:
   * The access key and secret key for S3 could be provided by `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, or *IAM* role.
