@@ -164,6 +164,9 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 }
 
 func run(c *cli.Context) error {
+	if c.IsSet("include") && !c.IsSet("exclude") {
+		logger.Warnf("The include option needs to be used with the exclude option, otherwise the result of the current sync may not match your expectations")
+	}
 	config := sync.NewConfigFromCli(c)
 	go func() { _ = http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", config.HTTPPort), nil) }()
 
