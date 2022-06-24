@@ -98,7 +98,7 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 				}
 				pass = string(bytePassword)
 			}
-			return object.CreateStorage("sftp", uri, user, pass)
+			return object.CreateStorage("sftp", uri, user, pass, "")
 		}
 	}
 	u, err := url.Parse(uri)
@@ -132,7 +132,7 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 		endpoint += u.Path
 	}
 
-	store, err := object.CreateStorage(name, endpoint, accessKey, secretKey)
+	store, err := object.CreateStorage(name, endpoint, accessKey, secretKey, "")
 	if err != nil {
 		return nil, fmt.Errorf("create %s %s: %s", name, endpoint, err)
 	}
