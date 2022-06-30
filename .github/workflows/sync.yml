@@ -56,6 +56,7 @@ jobs:
 
       - name: Test Sync
         run: |
+          set -x 
           meta_url=redis://127.0.0.1/1
           mount_point=/tmp/sync-test/
           juicefs format --trash-days 0 $meta_url sync-test
