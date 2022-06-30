@@ -79,9 +79,9 @@ jobs:
               rsync -a $source_dir rsync_dir/ $rsync_option
               test -d jfs_sync_dir/ && rm jfs_sync_dir/ -rf 
               mkdir jfs_sync_dir/
-              ./juicesync $source_dir jfs_sync_dir/ $jfs_option
+              ./juicesync $jfs_option $source_dir jfs_sync_dir/ 
               set -u noglob
-              printf ’juicefs sync %s %s %s\n‘ "$source_dir"  "jfs_sync_dir/" "$jfs_option" 
+              printf ’juicesync %s %s %s\n‘ "$source_dir"  "jfs_sync_dir/" "$jfs_option" 
               printf ’rsync %s %s %s\n‘ "$source_dir" "rsync_dir/"  "$rsync_option" 
               printf ‘diff between juicefs sync and rsync:\n’
               diff -ur jfs_sync_dir rsync_dir
