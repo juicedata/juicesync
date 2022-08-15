@@ -2,23 +2,23 @@
 
 ![build](https://github.com/juicedata/juicesync/workflows/build/badge.svg) ![release](https://github.com/juicedata/juicesync/workflows/release/badge.svg)
 
-Juicesync is a tool to move your data in object storage between any clouds or regions, also support local disk, SFTP, HDFS and many more storage.
+`juicesync` is a tool to copy your data in object storage between any clouds or regions, it also supports local disk, SFTP, HDFS and many more.
 
-Juicesync is an alias to [`juicefs sync`](https://juicefs.com/docs/community/administration/sync), but it may not contain the latest features and bug fixes of the `juicefs sync` command, so it's recommended use [JuiceFS](https://github.com/juicedata/juicefs) instead.
+This tool is intended to be used by JuiceFS Cloud Service users only, if you are already using JuiceFS Community Edition, see [`juicefs sync`](https://github.com/juicedata/juicefs) instead. As a matter of fact `juicesync` shares code with [`juicefs sync`](https://juicefs.com/docs/community/administration/sync), but due to release planning it may not contain the latest features and bug fixes of `juicefs sync`.
 
-## How it works?
+## How does it work
 
-Juicesync will scan all the keys from two object stores, and comparing them in ascending order to find out missing or outdated keys, then download them from the source and upload them to the destination in parallel.
+`juicesync` will scan all the keys from two object stores, and comparing them in ascending order to find out missing or outdated keys, then download them from the source and upload them to the destination in parallel.
 
 ## Install
 
-### With Homebrew
+### Homebrew
 
 ```sh
 brew install juicedata/tap/juicesync
 ```
 
-### Download binary release
+### binary release
 
 From [here](https://github.com/juicedata/juicesync/releases)
 
@@ -39,46 +39,7 @@ Please select the corresponding upgrade method according to different installati
 
 ## Usage
 
-Please check the `juicefs sync` command documentation for detailed usage: https://juicefs.com/docs/community/administration/sync
-
-```
-$ juicesync -h
-NAME:
-   juicesync - rsync for cloud storage
-
-USAGE:
-   juicesync [options] SRC DST
-    SRC and DST should be [NAME://][ACCESS_KEY:SECRET_KEY@]BUCKET[.ENDPOINT][/PREFIX]
-
-VERSION:
-   v0.7.1-2-g819f9c0
-
-COMMANDS:
-   help, h  Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-   --start KEY, -s KEY        the first KEY to sync
-   --end KEY, -e KEY          the last KEY to sync
-   --threads value, -p value  number of concurrent threads (default: 10)
-   --http-port PORT           HTTP PORT to listen to (default: 6070)
-   --update, -u               update existing file if the source is newer (default: false)
-   --force-update, -f         always update existing file (default: false)
-   --perms                    preserve permissions (default: false)
-   --dirs                     Sync directories or holders (default: false)
-   --dry                      don't copy file (default: false)
-   --delete-src, --deleteSrc  delete objects from source after synced (default: false)
-   --delete-dst, --deleteDst  delete extraneous objects from destination (default: false)
-   --exclude PATTERN          exclude keys containing PATTERN (POSIX regular expressions)
-   --include PATTERN          only include keys containing PATTERN (POSIX regular expressions)
-   --manager value            manager address
-   --worker value             hosts (seperated by comma) to launch worker
-   --bwlimit value            limit bandwidth in Mbps (default: unlimited) (default: 0)
-   --no-https                 donot use HTTPS (default: false)
-   --verbose, -v              turn on debug log (default: false)
-   --quiet, -q                change log level to ERROR (default: false)
-   --help, -h                 show help (default: false)
-   --version, -V              print only the version (default: false)
-```
+Please check the [`juicefs sync` command documentation](https://juicefs.com/docs/community/administration/sync) for detailed usage.
 
 SRC and DST must be an URI of the following object storage:
 
