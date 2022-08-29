@@ -4,7 +4,9 @@
 
 `juicesync` is a tool to copy your data in object storage between any clouds or regions, it also supports local disk, SFTP, HDFS and many more.
 
-This tool is intended to be used by JuiceFS Cloud Service users only, if you are already using JuiceFS Community Edition, see [`juicefs sync`](https://github.com/juicedata/juicefs) instead. As a matter of fact `juicesync` shares code with [`juicefs sync`](https://juicefs.com/docs/community/administration/sync), but due to release planning it may not contain the latest features and bug fixes of `juicefs sync`.
+This tool shares code with [`juicefs sync`](https://github.com/juicedata/juicefs), so if you are already using JuiceFS Community Edition, you should use `juicefs sync` instead.
+
+Due to release planning, `juicesync` may not contain the latest features and bug fixes of `juicefs sync`.
 
 ## How does it work
 
