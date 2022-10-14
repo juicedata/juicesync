@@ -3,7 +3,7 @@ module github.com/juicedata/juicesync
 go 1.17
 
 require (
-	github.com/juicedata/juicefs v1.0.0
+	github.com/juicedata/juicefs v1.0.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.4.0
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
@@ -32,7 +32,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/colinmarc/hdfs/v2 v2.3.0 // indirect
-	github.com/coreos/etcd v3.3.10+incompatible // indirect
+	github.com/coreos/etcd v3.3.27+incompatible // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
