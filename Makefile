@@ -17,5 +17,8 @@ juicesync:
 juicesync.exe: *.go utils/*.go versioninfo/*.go
 	GOOS=windows go build -ldflags="$(LDFLAGS)" -buildmode exe -o juicesync.exe
 
+juicesync.linux:
+	GOOS=linux GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o juicesync
+
 test:
 	go test ./...
