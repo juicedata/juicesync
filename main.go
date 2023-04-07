@@ -15,6 +15,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/erikdubbelboer/gspt"
 	"github.com/juicedata/juicefs/pkg/object"
 	"github.com/juicedata/juicefs/pkg/sync"
 	"github.com/juicedata/juicefs/pkg/utils"
@@ -178,8 +179,18 @@ func run(c *cli.Context) error {
 	utils.InitLoggers(false)
 
 	// Windows support `\` and `/` as its separator, Unix only use `/`
-	srcURL := strings.Replace(c.Args().Get(0), "\\", "/", -1)
-	dstURL := strings.Replace(c.Args().Get(1), "\\", "/", -1)
+	srcURL := c.Args().Get(0)
+	dstURL := c.Args().Get(1)
+	removePassword(srcURL)
+	removePassword(dstURL)
+	if runtime.GOOS == "windows" {
+		if !strings.Contains(srcURL, "://") {
+			srcURL = strings.Replace(srcURL, "\\", "/", -1)
+		}
+		if !strings.Contains(dstURL, "://") {
+			dstURL = strings.Replace(dstURL, "\\", "/", -1)
+		}
+	}
 	if strings.HasSuffix(srcURL, "/") != strings.HasSuffix(dstURL, "/") {
 		logger.Fatalf("SRC and DST should both end with path separator or not!")
 	}
@@ -192,6 +203,19 @@ func run(c *cli.Context) error {
 		return err
 	}
 	return sync.Sync(src, dst, config)
+}
+
+func removePassword(uri string) {
+	uri2 := utils.RemovePassword(uri)
+	if uri2 != uri {
+		for i, a := range os.Args {
+			if a == uri {
+				os.Args[i] = uri2
+				break
+			}
+		}
+	}
+	gspt.SetProcTitle(strings.Join(os.Args, " "))
 }
 
 func isFlag(flags []cli.Flag, option string) (bool, bool) {
