@@ -178,8 +178,16 @@ func run(c *cli.Context) error {
 	utils.InitLoggers(false)
 
 	// Windows support `\` and `/` as its separator, Unix only use `/`
-	srcURL := strings.Replace(c.Args().Get(0), "\\", "/", -1)
-	dstURL := strings.Replace(c.Args().Get(1), "\\", "/", -1)
+	srcURL := c.Args().Get(0)
+	dstURL := c.Args().Get(1)
+	if runtime.GOOS == "windows" {
+		if !strings.Contains(srcURL, "://") {
+			srcURL = strings.Replace(srcURL, "\\", "/", -1)
+		}
+		if !strings.Contains(dstURL, "://") {
+			dstURL = strings.Replace(dstURL, "\\", "/", -1)
+		}
+	}
 	if strings.HasSuffix(srcURL, "/") != strings.HasSuffix(dstURL, "/") {
 		logger.Fatalf("SRC and DST should both end with path separator or not!")
 	}
