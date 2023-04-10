@@ -3,3 +3,4 @@ juicesync
 juicesync.exe
 .idea
 .DS_Store
+.release-env
