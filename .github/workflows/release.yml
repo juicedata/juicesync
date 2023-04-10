@@ -26,4 +26,4 @@ jobs:
           echo 'GITHUB_TOKEN=${{secrets.GITHUB_PERSONAL_ACCESS_TOKEN}}' > .release-env
 
       - name: goreleaser release
-        run: make snapshot
+        run: make release
