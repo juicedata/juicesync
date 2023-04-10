@@ -1,26 +1,86 @@
+project_name: juicesync
+env:
+  - CGO_ENABLED=1
+before:
+  hooks:
+    - go mod download
 builds:
-  - env:
-      - CGO_ENABLED=0
+  - id: juicesync-windows-amd64
+    env:
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
+    goos:
+      - windows
+    goarch:
+      - amd64
     ldflags:
       - -s -w
       - -X github.com/juicedata/juicesync/versioninfo.VERSION={{.Version}}
       - -X github.com/juicedata/juicesync/versioninfo.REVISION={{.Commit}}
       - -X github.com/juicedata/juicesync/versioninfo.REVISIONDATE={{.Date}}
+    flags:
+      - -buildmode
+      - exe
+    main: .
+  - id: juicesync-darwin-amd64
+    env:
+      - CC=o64-clang
+      - CXX=o64-clang++
+    goos:
+      - darwin
     goarch:
       - amd64
+    main: .
+  - id: juicesync-darwin-arm64
+    env:
+      - CC=oa64-clang
+      - CXX=oa64-clang++
+    goos:
+      - darwin
+    goarch:
       - arm64
-
-archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
-
+    ldflags:
+      - -s -w
+      - -X github.com/juicedata/juicesync/versioninfo.VERSION={{.Version}}
+      - -X github.com/juicedata/juicesync/versioninfo.REVISION={{.Commit}}
+      - -X github.com/juicedata/juicesync/versioninfo.REVISIONDATE={{.Date}}
+    main: .
+  - id: juicesync-linux-amd64
+    env:
+      - CC=/usr/bin/musl-gcc
+    goos:
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      - -s -w
+      - -X github.com/juicedata/juicesync/versioninfo.VERSION={{.Version}}
+      - -X github.com/juicedata/juicesync/versioninfo.REVISION={{.Commit}}
+      - -X github.com/juicedata/juicesync/versioninfo.REVISIONDATE={{.Date}}
+      - -linkmode external -extldflags '-static'
+    main: .
+  - id: juicesync-linux-arm64
+    env:
+      - CC=aarch64-linux-gnu-gcc
+    goos:
+      - linux
+    goarch:
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/juicedata/juicesync/versioninfo.VERSION={{.Version}}
+      - -X github.com/juicedata/juicesync/versioninfo.REVISION={{.Commit}}
+      - -X github.com/juicedata/juicesync/versioninfo.REVISIONDATE={{.Date}}
+      - -linkmode external -extldflags '-static'
+    main: .
 checksum:
   name_template: 'checksums.txt'
 snapshot:
   name_template: "{{ .Tag }}-next"
+
+archives:
+  - name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
 changelog:
   sort: asc
   filters:

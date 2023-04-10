@@ -20,5 +20,27 @@ juicesync.exe: *.go utils/*.go versioninfo/*.go
 juicesync.linux:
 	GOOS=linux GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o juicesync
 
+.PHONY: snapshot release test
+snapshot:
+	docker run --rm --privileged \
+		-e REVISIONDATE=$(REVISIONDATE) \
+		-e PRIVATE_KEY=${PRIVATE_KEY} \
+		-v ~/go/pkg/mod:/go/pkg/mod \
+		-v `pwd`:/go/src/github.com/juicedata/juicesync \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-w /go/src/github.com/juicedata/juicesync \
+		juicedata/golang-cross:latest release --snapshot --rm-dist --skip-publish
+
+release:
+	docker run --rm --privileged \
+		-e REVISIONDATE=$(REVISIONDATE) \
+		-e PRIVATE_KEY=${PRIVATE_KEY} \
+		--env-file .release-env \
+		-v ~/go/pkg/mod:/go/pkg/mod \
+		-v `pwd`:/go/src/github.com/juicedata/juicesync \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-w /go/src/github.com/juicedata/juicesync \
+		juicedata/golang-cross:latest release --rm-dist
+
 test:
 	go test ./...
