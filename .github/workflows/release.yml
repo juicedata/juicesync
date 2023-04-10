@@ -3,7 +3,6 @@ name: release
 on:
   push:
     branches:
-      - master
       - goreleaser
     tags:
       - v*
