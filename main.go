@@ -5,7 +5,6 @@ package main
 import (
 	"fmt"
 	"net"
-	"net/http"
 	_ "net/http/pprof"
 	"net/url"
 	"os"
@@ -13,7 +12,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"github.com/erikdubbelboer/gspt"
 	"github.com/juicedata/juicefs/pkg/object"
@@ -22,7 +20,6 @@ import (
 	"github.com/juicedata/juicesync/versioninfo"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/term"
 )
 
 var logger = utils.GetLogger("juicesync")
@@ -57,13 +54,14 @@ func isFilePath(uri string) bool {
 	return !strings.Contains(uri, ":")
 }
 
-func isS3PathType(endpoint string) bool {
-	//localhost[:8080] 127.0.0.1[:8080]  s3.ap-southeast-1.amazonaws.com[:8080] s3-ap-southeast-1.amazonaws.com[:8080]
-	pattern := `^((localhost)|(s3[.-].*\.amazonaws\.com)|((1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.((1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.){2}(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)))?(:\d*)?$`
-	return regexp.MustCompile(pattern).MatchString(endpoint)
+func extractToken(uri string) (string, string) {
+	if submatch := regexp.MustCompile(`^.*:.*:.*(:.*)@.*$`).FindStringSubmatch(uri); len(submatch) == 2 {
+		return strings.ReplaceAll(uri, submatch[1], ""), strings.TrimLeft(submatch[1], ":")
+	}
+	return uri, ""
 }
 
-func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) {
+func createSyncStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) {
 	if !strings.Contains(uri, "://") {
 		if isFilePath(uri) {
 			absPath, err := filepath.Abs(uri)
@@ -91,17 +89,11 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 				parts := strings.Split(user, ":")
 				user = parts[0]
 				pass = parts[1]
-			} else if os.Getenv("SSH_PRIVATE_KEY_PATH") == "" {
-				fmt.Print("Enter Password: ")
-				bytePassword, err := term.ReadPassword(int(syscall.Stdin))
-				if err != nil {
-					logger.Fatalf("Read password: %s", err.Error())
-				}
-				pass = string(bytePassword)
 			}
 			return object.CreateStorage("sftp", uri, user, pass, "")
 		}
 	}
+	uri, token := extractToken(uri)
 	u, err := url.Parse(uri)
 	if err != nil {
 		logger.Fatalf("Can't parse %s: %s", uri, err.Error())
@@ -113,30 +105,44 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 		secretKey, _ = user.Password()
 	}
 	name := strings.ToLower(u.Scheme)
-	endpoint := u.Host
-	if conf.Links && name != "file" {
-		logger.Warnf("storage %s does not support symlink, ignore it", uri)
-		conf.Links = false
-	}
-	isS3PathTypeUrl := isS3PathType(endpoint)
 
+	var endpoint string
 	if name == "file" {
 		endpoint = u.Path
 	} else if name == "hdfs" {
-	} else if !conf.NoHTTPS && supportHTTPS(name, endpoint) {
-		endpoint = "https://" + endpoint
+		endpoint = u.Host
+	} else if name == "jfs" {
+		endpoint, err = url.PathUnescape(u.Host)
+		if err != nil {
+			return nil, fmt.Errorf("unescape %s: %s", u.Host, err)
+		}
+		if os.Getenv(endpoint) != "" {
+			conf.Env[endpoint] = os.Getenv(endpoint)
+		}
+	} else if !conf.NoHTTPS && supportHTTPS(name, u.Host) {
+		endpoint = "https://" + u.Host
 	} else {
-		endpoint = "http://" + endpoint
+		endpoint = "http://" + u.Host
 	}
+
+	isS3PathTypeUrl := isS3PathType(u.Host)
 	if name == "minio" || name == "s3" && isS3PathTypeUrl {
 		// bucket name is part of path
 		endpoint += u.Path
 	}
 
-	store, err := object.CreateStorage(name, endpoint, accessKey, secretKey, "")
+	store, err := object.CreateStorage(name, endpoint, accessKey, secretKey, token)
 	if err != nil {
 		return nil, fmt.Errorf("create %s %s: %s", name, endpoint, err)
 	}
+
+	if conf.Links {
+		if _, ok := store.(object.SupportSymlink); !ok {
+			logger.Warnf("storage %s does not support symlink, ignore it", uri)
+			conf.Links = false
+		}
+	}
+
 	if conf.Perms {
 		if _, ok := store.(object.FileSystem); !ok {
 			logger.Warnf("%s is not a file system, can not preserve permissions", store)
@@ -161,22 +167,22 @@ func createStorage(uri string, conf *sync.Config) (object.ObjectStorage, error) 
 			store = object.WithPrefix(store, u.Path[1:])
 		}
 	}
+
 	return store, nil
 }
 
-func run(c *cli.Context) error {
+func isS3PathType(endpoint string) bool {
+	//localhost[:8080] 127.0.0.1[:8080]  s3.ap-southeast-1.amazonaws.com[:8080] s3-ap-southeast-1.amazonaws.com[:8080]
+	pattern := `^((localhost)|(s3[.-].*\.amazonaws\.com)|((1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|[1-9])\.((1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)\.){2}(1\d{2}|2[0-4]\d|25[0-5]|[1-9]\d|\d)))?(:\d*)?$`
+	return regexp.MustCompile(pattern).MatchString(endpoint)
+}
+
+func doSync(c *cli.Context) error {
+	setup(c, 2)
 	if c.IsSet("include") && !c.IsSet("exclude") {
 		logger.Warnf("The include option needs to be used with the exclude option, otherwise the result of the current sync may not match your expectations")
 	}
 	config := sync.NewConfigFromCli(c)
-	go func() { _ = http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", config.HTTPPort), nil) }()
-
-	if config.Verbose {
-		utils.SetLogLevel(logrus.DebugLevel)
-	} else if config.Quiet {
-		utils.SetLogLevel(logrus.ErrorLevel)
-	}
-	utils.InitLoggers(false)
 
 	// Windows support `\` and `/` as its separator, Unix only use `/`
 	srcURL := c.Args().Get(0)
@@ -194,28 +200,20 @@ func run(c *cli.Context) error {
 	if strings.HasSuffix(srcURL, "/") != strings.HasSuffix(dstURL, "/") {
 		logger.Fatalf("SRC and DST should both end with path separator or not!")
 	}
-	src, err := createStorage(srcURL, config)
+	src, err := createSyncStorage(srcURL, config)
 	if err != nil {
 		return err
 	}
-	dst, err := createStorage(dstURL, config)
+	dst, err := createSyncStorage(dstURL, config)
 	if err != nil {
 		return err
 	}
-	return sync.Sync(src, dst, config)
-}
-
-func removePassword(uri string) {
-	uri2 := utils.RemovePassword(uri)
-	if uri2 != uri {
-		for i, a := range os.Args {
-			if a == uri {
-				os.Args[i] = uri2
-				break
-			}
+	if config.StorageClass != "" {
+		if os, ok := dst.(object.SupportStorageClass); ok {
+			os.SetStorageClass(config.StorageClass)
 		}
 	}
-	gspt.SetProcTitle(strings.Join(os.Args, " "))
+	return sync.Sync(src, dst, config)
 }
 
 func isFlag(flags []cli.Flag, option string) (bool, bool) {
@@ -289,7 +287,67 @@ func reorderOptions(app *cli.App, args []string) []string {
 	return append(newArgs, others...)
 }
 
+// Check number of positional arguments, set logger level
+func setup(c *cli.Context, n int) {
+	if c.NArg() != n {
+		fmt.Printf("ERROR: This command requires %d arguments\n", n)
+		fmt.Printf("USAGE: %s\n", versioninfo.USAGE)
+		os.Exit(1)
+	}
+
+	if c.Bool("verbose") {
+		utils.SetLogLevel(logrus.DebugLevel)
+	} else if c.Bool("quiet") {
+		utils.SetLogLevel(logrus.ErrorLevel)
+	}
+}
+
+func removePassword(uri string) {
+	args := make([]string, len(os.Args))
+	copy(args, os.Args)
+	uri2 := utils.RemovePassword(uri)
+	if uri2 != uri {
+		for i, a := range os.Args {
+			if a == uri {
+				args[i] = uri2
+				break
+			}
+		}
+	}
+	gspt.SetProcTitle(strings.Join(args, " "))
+}
+
+func addCategory(f cli.Flag, cat string) {
+	switch ff := f.(type) {
+	case *cli.StringFlag:
+		ff.Category = cat
+	case *cli.BoolFlag:
+		ff.Category = cat
+	case *cli.IntFlag:
+		ff.Category = cat
+	case *cli.Int64Flag:
+		ff.Category = cat
+	case *cli.Uint64Flag:
+		ff.Category = cat
+	case *cli.Float64Flag:
+		ff.Category = cat
+	case *cli.StringSliceFlag:
+		ff.Category = cat
+	default:
+		panic(f)
+	}
+}
+
+func addCategories(cat string, flags []cli.Flag) []cli.Flag {
+	for _, f := range flags {
+		addCategory(f, cat)
+	}
+	return flags
+}
+
 func main() {
+	// we have to call this because gspt removes all arguments
+	gspt.SetProcTitle(strings.Join(os.Args, " "))
 	cli.VersionFlag = &cli.BoolFlag{
 		Name: "version", Aliases: []string{"V"},
 		Usage: "print only the version",
@@ -337,105 +395,9 @@ func main() {
 	Details: https://juicefs.com/docs/community/administration/sync
 	Supported storage systems: https://juicefs.com/docs/community/how_to_setup_object_storage#supported-object-storage`
 	app.Version = versioninfo.VERSION
-	app.Copyright = "AGPLv3"
-	app.Flags = []cli.Flag{
-		&cli.StringFlag{
-			Name:    "start",
-			Aliases: []string{"s"},
-			Value:   "",
-			Usage:   "the first `KEY` to sync",
-		},
-		&cli.StringFlag{
-			Name:    "end",
-			Aliases: []string{"e"},
-			Value:   "",
-			Usage:   "the last `KEY` to sync",
-		},
-		&cli.IntFlag{
-			Name:    "threads",
-			Aliases: []string{"p"},
-			Value:   10,
-			Usage:   "number of concurrent threads",
-		},
-		&cli.IntFlag{
-			Name:  "http-port",
-			Value: 6070,
-			Usage: "HTTP `PORT` to listen to",
-		},
-		&cli.BoolFlag{
-			Name:    "update",
-			Aliases: []string{"u"},
-			Usage:   "update existing file if the source is newer",
-		},
-		&cli.BoolFlag{
-			Name:    "force-update",
-			Aliases: []string{"f"},
-			Usage:   "always update existing file",
-		},
-		&cli.BoolFlag{
-			Name:  "perms",
-			Usage: "preserve permissions",
-		},
-		&cli.BoolFlag{
-			Name:  "dirs",
-			Usage: "Sync directories or holders",
-		},
-		&cli.BoolFlag{
-			Name:  "dry",
-			Usage: "don't copy file",
-		},
-		&cli.BoolFlag{
-			Name:    "delete-src",
-			Aliases: []string{"deleteSrc"},
-			Usage:   "delete objects from source after synced",
-		},
-		&cli.BoolFlag{
-			Name:    "delete-dst",
-			Aliases: []string{"deleteDst"},
-			Usage:   "delete extraneous objects from destination",
-		},
-		&cli.StringSliceFlag{
-			Name:  "exclude",
-			Usage: "exclude Key matching PATTERN",
-		},
-		&cli.StringSliceFlag{
-			Name:  "include",
-			Usage: "don't exclude Key matching PATTERN, need to be used with \"--exclude\" option",
-		},
-		&cli.BoolFlag{
-			Name:    "links",
-			Aliases: []string{"l"},
-			Usage:   "copy symlinks as symlinks",
-		},
-		&cli.Int64Flag{
-			Name:  "limit",
-			Usage: "limit the number of objects that will be processed",
-			Value: -1,
-		},
-		&cli.StringFlag{
-			Name:  "manager",
-			Usage: "manager address",
-		},
-		&cli.StringSliceFlag{
-			Name:  "worker",
-			Usage: "hosts (seperated by comma) to launch worker",
-		},
-		&cli.IntFlag{
-			Name:  "bwlimit",
-			Usage: "limit bandwidth in Mbps (default: unlimited)",
-		},
-		&cli.BoolFlag{
-			Name:  "no-https",
-			Usage: "donot use HTTPS",
-		},
-		&cli.BoolFlag{
-			Name:  "check-all",
-			Usage: "verify integrity of all files in source and destination",
-		},
-		&cli.BoolFlag{
-			Name:  "check-new",
-			Usage: "verify integrity of newly copied files",
-		},
+	app.Copyright = "Apache License 2.0"
+	app.Action = doSync
+	app.Flags = addCategories("GENERAL", []cli.Flag{
 		&cli.BoolFlag{
 			Name:    "verbose",
 			Aliases: []string{"v"},
@@ -446,14 +408,133 @@ func main() {
 			Aliases: []string{"q"},
 			Usage:   "change log level to ERROR",
 		},
-	}
-	app.Action = func(c *cli.Context) error {
-		if c.Args().Len() != 2 {
-			logger.Errorf(versioninfo.USAGE)
-			return nil
-		}
-		return run(c)
-	}
+	})
+	app.Flags = append(app.Flags, addCategories("SELECTION", []cli.Flag{
+		&cli.StringFlag{
+			Name:    "start",
+			Aliases: []string{"s"},
+			Usage:   "the first `KEY` to sync",
+		},
+		&cli.StringFlag{
+			Name:    "end",
+			Aliases: []string{"e"},
+			Usage:   "the last `KEY` to sync",
+		},
+		&cli.StringSliceFlag{
+			Name:  "exclude",
+			Usage: "exclude Key matching PATTERN",
+		},
+		&cli.StringSliceFlag{
+			Name:  "include",
+			Usage: "don't exclude Key matching PATTERN, need to be used with \"--exclude\" option",
+		},
+		&cli.Int64Flag{
+			Name:  "limit",
+			Usage: "limit the number of objects that will be processed (-1 is unlimited, 0 is to process nothing)",
+			Value: -1,
+		},
+		&cli.BoolFlag{
+			Name:    "update",
+			Aliases: []string{"u"},
+			Usage:   "skip files if the destination is newer",
+		},
+		&cli.BoolFlag{
+			Name:    "force-update",
+			Aliases: []string{"f"},
+			Usage:   "always update existing files",
+		},
+		&cli.BoolFlag{
+			Name:    "existing",
+			Aliases: []string{"ignore-non-existing"},
+			Usage:   "skip creating new files on destination",
+		},
+		&cli.BoolFlag{
+			Name:  "ignore-existing",
+			Usage: "skip updating files that already exist on destination",
+		},
+	})...)
+	app.Flags = append(app.Flags, addCategories("ACTION", []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "dirs",
+			Usage: "sync directories or holders",
+		},
+		&cli.BoolFlag{
+			Name:  "perms",
+			Usage: "preserve permissions",
+		},
+		&cli.BoolFlag{
+			Name:    "links",
+			Aliases: []string{"l"},
+			Usage:   "copy symlinks as symlinks",
+		},
+		&cli.BoolFlag{
+			Name:    "delete-src",
+			Aliases: []string{"deleteSrc"},
+			Usage:   "delete objects from source those already exist in destination",
+		},
+		&cli.BoolFlag{
+			Name:    "delete-dst",
+			Aliases: []string{"deleteDst"},
+			Usage:   "delete extraneous objects from destination",
+		},
+		&cli.BoolFlag{
+			Name:  "check-all",
+			Usage: "verify integrity of all files in source and destination",
+		},
+		&cli.BoolFlag{
+			Name:  "check-new",
+			Usage: "verify integrity of newly copied files",
+		},
+		&cli.BoolFlag{
+			Name:  "dry",
+			Usage: "don't copy file",
+		},
+	})...)
+	app.Flags = append(app.Flags, addCategories("STORAGE", []cli.Flag{
+		&cli.IntFlag{
+			Name:    "threads",
+			Aliases: []string{"p"},
+			Value:   10,
+			Usage:   "number of concurrent threads",
+		},
+		&cli.IntFlag{
+			Name:  "list-threads",
+			Value: 1,
+			Usage: "number of threads to list objects",
+		},
+		&cli.IntFlag{
+			Name:  "list-depth",
+			Value: 1,
+			Usage: "list the top N level of directories in parallel",
+		},
+		&cli.BoolFlag{
+			Name:  "no-https",
+			Usage: "donot use HTTPS",
+		},
+		&cli.StringFlag{
+			Name:  "storage-class",
+			Usage: "the storage class for destination",
+		},
+		&cli.IntFlag{
+			Name:  "bwlimit",
+			Usage: "limit bandwidth in Mbps (0 means unlimited)",
+		},
+	})...)
+	app.Flags = append(app.Flags, addCategories("CLUSTER", []cli.Flag{
+		&cli.StringFlag{
+			Name:   "manager",
+			Usage:  "the manager address used only by the worker node",
+			Hidden: true,
+		},
+		&cli.StringSliceFlag{
+			Name:  "worker",
+			Usage: "hosts (separated by comma) to launch worker",
+		},
+		&cli.StringFlag{
+			Name:  "manager-addr",
+			Usage: "the IP address to communicate with workers",
+		},
+	})...)
 
 	err := app.Run(reorderOptions(app, os.Args))
 	if err != nil {
